@@ -1,0 +1,118 @@
+@import url('./ios.css');
+@import url('./content.css');
+@import url('./adaptive.css');
+@import url('./refinements.css');
+@import url('./system-colors.css');
+@import url('./presentations.css');
+@import url('./accessibility.css');
+@import url('./contrast.css');
+@import url('./patterns.css');
+@import url('./charts.css');
+@import url('./controllers.css');
+@import url('./virtual-list.css');
+@import url('./chrome.css');
+@import url('./radii.css');
+
+/* Apple semantic text metrics at the default content-size category.
+   Browsers can still zoom or enlarge text without changing the hierarchy. */
+.ios-large-title { font-size: 34px; line-height: 41px; }
+.ios-title-1 { font-size: 28px; line-height: 34px; }
+.ios-title-2 { font-size: 22px; line-height: 28px; }
+.ios-title-3 { font-size: 20px; line-height: 25px; }
+.ios-headline { font-size: 17px; line-height: 22px; font-weight: 600; }
+.ios-body { font-size: 17px; line-height: 22px; }
+.ios-callout { font-size: 16px; line-height: 21px; }
+.ios-subheadline { font-size: 15px; line-height: 20px; }
+.ios-footnote { font-size: 13px; line-height: 18px; }
+.ios-caption { font-size: 12px; line-height: 16px; }
+.ios-caption-2 { font-size: 11px; line-height: 13px; }
+
+/* Compact large-title navigation.
+   The compact title always stays in the real top bar. Only the trailing action
+   moves down beside the large title at rest, then returns to the bar on scroll. */
+@media (max-width: 759px), (max-height: 599px) {
+  .ios-tab-panel > .ios-navigation-bar {
+    position: absolute;
+    inset: 0 0 auto;
+    padding-top: calc(var(--ios-safe-top) + var(--glasskit-navigation-top-inset, 8px));
+    padding-bottom: 0;
+  }
+
+  .ios-tab-panel > .ios-navigation-bar .ios-navigation-bar__row {
+    transform: none;
+  }
+
+  .ios-tab-panel > .ios-navigation-bar .ios-navigation-bar__trailing {
+    transform: translateY(48px);
+    transition: transform 220ms var(--ios-ease);
+  }
+
+  .ios-tab-panel > .ios-navigation-bar.is-scrolled .ios-navigation-bar__trailing {
+    transform: translateY(0);
+  }
+
+  .ios-tab-panel > .ios-scroll {
+    padding-top: calc(var(--ios-safe-top) + 58px);
+  }
+
+  .ios-tab-panel .ios-content > .ios-large-title:first-child {
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+
+  .ios-tab-panel:has(.ios-navigation-bar__trailing > *) .ios-content > .ios-large-title:first-child {
+    padding-right: 56px;
+  }
+}
+
+/* Pushed destinations keep the compact bar visible because the back relationship
+   is part of the destination's navigation context. */
+.ios-push-screen > .ios-navigation-bar {
+  padding-top: calc(var(--ios-safe-top) + var(--glasskit-navigation-top-inset, 8px));
+  padding-bottom: 1px;
+}
+.ios-push-screen > .ios-navigation-bar + .ios-scroll { padding-top: 0; }
+
+/* Cards in a horizontal collection form one visual row. Generic vertical card
+   spacing must not leak into the horizontal layout. */
+.ios-card-scroller { align-items: stretch; }
+.ios-card-scroller > .ios-card,
+.ios-card-scroller > .ios-card + .ios-card {
+  height: 100%;
+  margin-top: 0;
+}
+.ios-card-scroller .ios-scroll-card {
+  min-height: 100%;
+  justify-content: flex-start;
+}
+.ios-card-scroller .ios-scroll-card__media { flex: 0 0 auto; }
+
+/* Icon-only store actions use a true centred flex box. */
+.ios-app-row__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ios-app-row__action .ios-symbol { margin: 0; }
+
+/* Once the compact navigation state is active, content must not show through the
+   bar. The floating controls can remain glass while the bar itself becomes an
+   opaque system background with a subtle separator. */
+.ios-navigation-bar {
+  background-color: transparent;
+  border-bottom: .5px solid transparent;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.ios-navigation-bar.is-scrolled {
+  background-color: var(--ios-background-secondary);
+  border-bottom-color: var(--ios-separator);
+}
+.ios-navigation-bar.is-scrolled::after { opacity: 0; }
+
+/* Percentage widths on inline spans are ignored by CSS. Comparison fills are
+   block-level so the value in each inline width style produces a visible bar. */
+.ios-horizontal-bar__fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+}

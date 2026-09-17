@@ -1,0 +1,29 @@
+/* GlassKit navigation chrome spacing.
+   Controls sit inside the safe area with an additional visual margin, rather than
+   touching the viewport edge once a safe-area inset is present. */
+
+:root {
+  --glasskit-navigation-edge-inset: 16px;
+  --glasskit-navigation-top-inset: 8px;
+}
+
+.ios-navigation-bar {
+  padding-left: calc(var(--ios-safe-left) + var(--glasskit-navigation-edge-inset));
+  padding-right: calc(var(--ios-safe-right) + var(--glasskit-navigation-edge-inset));
+}
+
+@media (max-width: 759px), (max-height: 599px) {
+  .ios-tab-panel > .ios-navigation-bar,
+  .ios-push-screen > .ios-navigation-bar {
+    padding-top: calc(var(--ios-safe-top) + var(--glasskit-navigation-top-inset));
+  }
+
+  /* Keep the large-title region aligned with the taller compact chrome. */
+  .ios-tab-panel > .ios-scroll {
+    padding-top: calc(var(--ios-safe-top) + 58px);
+  }
+}
+
+@media (min-width: 760px) and (min-height: 600px) {
+  :root { --glasskit-navigation-edge-inset: 20px; }
+}

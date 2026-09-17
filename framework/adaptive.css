@@ -1,0 +1,415 @@
+/* Adaptive iOS and iPadOS web layer
+   Compact widths use iPhone patterns. Regular widths use iPad-style adaptive navigation.
+*/
+
+:root {
+  --ios-regular-sidebar-width: 248px;
+  --ios-regular-gutter: 20px;
+  --ios-readable-width: 680px;
+  --ios-wide-content: 1120px;
+  --ios-hover-fill: rgba(120, 120, 128, .10);
+}
+
+/* Content patterns */
+.ios-collection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(156px, 100%), 1fr));
+  gap: 12px;
+}
+
+.ios-collection__item {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--ios-radius-l);
+  background: var(--ios-background-tertiary);
+}
+
+.ios-collection__button {
+  width: 100%;
+  min-height: var(--ios-hit);
+  display: block;
+  color: inherit;
+  text-align: left;
+}
+
+.ios-collection__media {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--ios-fill-secondary);
+}
+
+.ios-collection__media > img,
+.ios-collection__media > video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.ios-collection__content { padding: 11px 12px 13px; }
+.ios-collection__title { font-size: 15px; line-height: 1.25; font-weight: 600; }
+.ios-collection__subtitle { margin-top: 2px; color: var(--ios-label-secondary); font-size: 13px; line-height: 1.25; }
+
+.ios-horizontal-scroll {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(78vw, 310px);
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 16px 8px;
+  margin-inline: -16px;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+.ios-horizontal-scroll > * { scroll-snap-align: start; }
+.ios-horizontal-scroll::-webkit-scrollbar { display: none; }
+
+.ios-text-view {
+  width: 100%;
+  min-height: 128px;
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  border-radius: var(--ios-radius-m);
+  padding: 12px 14px;
+  background: var(--ios-background-tertiary);
+  color: var(--ios-label);
+  font: inherit;
+  line-height: 1.4;
+}
+.ios-text-view::placeholder { color: var(--ios-label-secondary); }
+
+.ios-picker-field {
+  position: relative;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: var(--ios-fill-secondary);
+  padding: 0 12px;
+}
+.ios-picker-field select,
+.ios-picker-field input[type="date"],
+.ios-picker-field input[type="time"],
+.ios-picker-field input[type="datetime-local"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ios-label);
+  font: inherit;
+}
+
+.ios-data-table-wrap {
+  width: 100%;
+  overflow: auto;
+  border-radius: var(--ios-radius-l);
+  background: var(--ios-background-tertiary);
+}
+.ios-data-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.ios-data-table th,
+.ios-data-table td {
+  padding: 11px 14px;
+  border-bottom: .5px solid var(--ios-separator);
+  text-align: left;
+  vertical-align: middle;
+}
+.ios-data-table th {
+  color: var(--ios-label-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ios-data-table tbody tr:last-child td { border-bottom: 0; }
+.ios-data-table td[data-align="right"],
+.ios-data-table th[data-align="right"] { text-align: right; }
+
+.ios-split-view {
+  width: 100%;
+  min-height: 360px;
+  overflow: hidden;
+  border-radius: var(--ios-radius-xl);
+  background: var(--ios-background-tertiary);
+}
+.ios-split-view__sidebar,
+.ios-split-view__content,
+.ios-split-view__inspector {
+  min-width: 0;
+  min-height: 0;
+}
+.ios-split-view__sidebar,
+.ios-split-view__inspector { background: color-mix(in srgb, var(--ios-background-secondary) 88%, transparent); }
+.ios-split-view__content { background: var(--ios-background); }
+.ios-split-view__pane-scroll { height: 100%; overflow: auto; padding: 16px; }
+.ios-split-view__sidebar[hidden],
+.ios-split-view__content[hidden],
+.ios-split-view__inspector[hidden] { display: none !important; }
+
+.ios-selection-row[aria-selected="true"] {
+  background: color-mix(in srgb, var(--ios-blue) 13%, transparent);
+}
+.ios-selection-row[aria-selected="true"] .ios-row__title { font-weight: 600; }
+
+/* Search presentation */
+.ios-search-strip {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  padding: 6px 0 10px;
+  background: linear-gradient(to bottom, var(--ios-background-secondary) 70%, transparent);
+}
+
+/* Popover for regular-width transient content */
+.ios-popover {
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(70dvh, 560px);
+  overflow: auto;
+  padding: 14px;
+  border: 0;
+  border-radius: 24px;
+  background: var(--ios-glass-strong);
+  color: var(--ios-label);
+  box-shadow: var(--ios-shadow);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+}
+.ios-popover::backdrop { background: transparent; }
+.ios-popover[popover]:not(:popover-open) { display: none; }
+
+/* Inline feedback and loading */
+.ios-skeleton {
+  position: relative;
+  overflow: hidden;
+  min-height: 1em;
+  border-radius: 8px;
+  background: var(--ios-fill-secondary);
+}
+.ios-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ios-label) 8%, transparent), transparent);
+  animation: ios-skeleton 1.35s ease-in-out infinite;
+}
+@keyframes ios-skeleton { to { transform: translateX(100%); } }
+.ios-skeleton--text { height: 14px; }
+.ios-skeleton--title { width: 62%; height: 22px; }
+.ios-skeleton--avatar { width: 44px; height: 44px; border-radius: 50%; }
+
+.ios-inline-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--ios-radius-m);
+  background: var(--ios-background-tertiary);
+}
+.ios-inline-message__symbol { flex: 0 0 auto; color: var(--ios-blue); font-size: 19px; }
+.ios-inline-message__body { min-width: 0; }
+.ios-inline-message__title { font-size: 15px; font-weight: 600; }
+.ios-inline-message__text { margin-top: 2px; color: var(--ios-label-secondary); font-size: 14px; line-height: 1.35; }
+.ios-inline-message--success .ios-inline-message__symbol { color: var(--ios-green); }
+.ios-inline-message--warning .ios-inline-message__symbol { color: var(--ios-orange); }
+.ios-inline-message--error .ios-inline-message__symbol { color: var(--ios-red); }
+
+/* Compact presentation defaults */
+@media (max-width: 759px), (max-height: 599px) {
+  .ios-split-view { display: block; }
+  .ios-split-view__sidebar,
+  .ios-split-view__content,
+  .ios-split-view__inspector { min-height: 360px; }
+
+  .ios-popover[popover]:popover-open {
+    position: fixed;
+    inset: auto 12px calc(12px + var(--ios-safe-bottom)) 12px;
+    width: auto;
+    max-height: min(78dvh, 620px);
+    margin: 0;
+    border-radius: var(--ios-radius-sheet);
+  }
+  .ios-popover[popover]::backdrop { background: rgba(0,0,0,.24); }
+}
+
+/* Regular width: iPad-style adaptive navigation */
+@media (min-width: 760px) and (min-height: 600px) {
+  :root {
+    --ios-content-max: 980px;
+    --ios-tabbar-height: 0px;
+  }
+
+  .ios-app { background: var(--ios-background-secondary); }
+
+  .ios-tabbar-wrap {
+    position: absolute;
+    z-index: 70;
+    left: max(12px, var(--ios-safe-left));
+    right: auto;
+    top: calc(12px + var(--ios-safe-top));
+    bottom: calc(12px + var(--ios-safe-bottom));
+    width: var(--ios-regular-sidebar-width);
+    padding: 0;
+    pointer-events: none;
+  }
+
+  .ios-tabbar {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 10px;
+    border-radius: 30px;
+    pointer-events: auto;
+  }
+
+  .ios-tabbar__item,
+  .ios-tabbar.is-minimized .ios-tabbar__item {
+    width: 100%;
+    min-height: 44px;
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 11px;
+    padding: 0 13px;
+    border-radius: 13px;
+    color: var(--ios-label);
+    font-size: 15px;
+    line-height: 1.2;
+    text-align: left;
+  }
+  .ios-tabbar__item .ios-symbol,
+  .ios-tabbar.is-minimized .ios-tabbar__item .ios-symbol { width: 20px; height: 20px; }
+  .ios-tabbar.is-minimized { width: 100%; min-height: 0; }
+  .ios-tabbar.is-minimized .ios-tabbar__item span:last-child { display: inline; }
+  .ios-tabbar__item[aria-selected="true"] {
+    background: color-mix(in srgb, var(--ios-blue) 13%, transparent);
+    color: var(--ios-blue);
+  }
+
+  .ios-tab-panel > .ios-scroll,
+  .ios-push-screen > .ios-scroll {
+    padding-left: calc(var(--ios-regular-sidebar-width) + var(--ios-regular-gutter) + max(16px, var(--ios-safe-left)));
+    padding-right: max(22px, var(--ios-safe-right));
+    padding-bottom: calc(34px + var(--ios-safe-bottom));
+  }
+
+  .ios-tab-panel > .ios-navigation-bar,
+  .ios-push-screen > .ios-navigation-bar {
+    padding-left: calc(var(--ios-regular-sidebar-width) + var(--ios-regular-gutter) + max(12px, var(--ios-safe-left)));
+    padding-right: max(18px, var(--ios-safe-right));
+  }
+
+  .ios-navigation-bar__row { max-width: var(--ios-wide-content); }
+  .ios-content { max-width: var(--ios-wide-content); }
+  .ios-readable { max-width: var(--ios-readable-width); }
+
+  .ios-collection { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+  .ios-horizontal-scroll { grid-auto-columns: min(340px, 36vw); }
+
+  .ios-split-view {
+    display: grid;
+    grid-template-columns: minmax(220px, 28%) minmax(0, 1fr);
+    min-height: 480px;
+  }
+  .ios-split-view:has(.ios-split-view__inspector:not([hidden])) {
+    grid-template-columns: minmax(220px, 24%) minmax(0, 1fr) minmax(220px, 26%);
+  }
+  .ios-split-view__sidebar { border-right: .5px solid var(--ios-separator); }
+  .ios-split-view__inspector { border-left: .5px solid var(--ios-separator); }
+
+  .ios-sheet {
+    width: min(620px, calc(100vw - 96px));
+    max-height: min(78dvh, 760px);
+  }
+
+  .ios-action-sheet { width: min(420px, calc(100vw - 64px)); }
+}
+
+@media (min-width: 1180px) and (min-height: 650px) {
+  :root {
+    --ios-regular-sidebar-width: 272px;
+    --ios-regular-gutter: 26px;
+    --ios-content-max: 1120px;
+  }
+  .ios-collection { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+
+/* Pointer and keyboard polish on desktop and iPad trackpad */
+@media (hover: hover) and (pointer: fine) {
+  .ios-button,
+  .ios-bar-button,
+  .ios-toolbar__button,
+  .ios-tabbar__item,
+  .ios-row,
+  .ios-menu__item,
+  .ios-card--interactive,
+  .ios-collection__button {
+    transition: background-color 120ms ease, transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
+  }
+
+  .ios-button:hover:not(:disabled),
+  .ios-bar-button:hover:not(:disabled),
+  .ios-toolbar__button:hover:not(:disabled),
+  .ios-menu__item:hover:not(:disabled),
+  button.ios-row:hover:not(:disabled),
+  .ios-collection__button:hover:not(:disabled) { background-color: var(--ios-hover-fill); }
+
+  .ios-button--prominent:hover:not(:disabled) { background-color: color-mix(in srgb, var(--ios-blue) 88%, white); }
+  .ios-button--tinted:hover:not(:disabled) { background-color: color-mix(in srgb, var(--ios-blue) 21%, transparent); }
+  .ios-button--destructive:hover:not(:disabled) { background-color: color-mix(in srgb, var(--ios-red) 21%, transparent); }
+  .ios-tabbar__item:hover:not([aria-selected="true"]) { background: var(--ios-hover-fill); }
+  .ios-card--interactive:hover { transform: translateY(-1px); box-shadow: var(--ios-shadow-soft); }
+
+  [title] { cursor: help; }
+}
+
+/* Accessibility adaptations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ios-separator: color-mix(in srgb, var(--ios-label) 42%, transparent);
+    --ios-label-secondary: color-mix(in srgb, var(--ios-label) 76%, transparent);
+    --ios-label-tertiary: color-mix(in srgb, var(--ios-label) 56%, transparent);
+  }
+  .ios-card--outlined,
+  .ios-list,
+  .ios-data-table-wrap { outline: 1px solid var(--ios-separator); }
+}
+
+@media (forced-colors: active) {
+  .ios-glass-group,
+  .ios-tabbar,
+  .ios-toolbar__group,
+  .ios-menu,
+  .ios-popover,
+  .ios-alert { background: Canvas; color: CanvasText; border: 1px solid CanvasText; box-shadow: none; }
+  .ios-tabbar__item[aria-selected="true"],
+  .ios-selection-row[aria-selected="true"] { outline: 2px solid Highlight; }
+}

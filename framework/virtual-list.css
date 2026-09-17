@@ -1,0 +1,29 @@
+/* Fixed-row virtualization for large collections. */
+.glasskit-virtual-list {
+  position: relative;
+  min-height: 1px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  contain: layout paint style;
+}
+
+.glasskit-virtual-list__spacer {
+  position: relative;
+  width: 100%;
+  min-height: 1px;
+}
+
+.glasskit-virtual-list__viewport {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  will-change: transform;
+}
+
+.glasskit-virtual-list__item {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  contain: layout paint style;
+}

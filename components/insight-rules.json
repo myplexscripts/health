@@ -1,0 +1,6 @@
+{
+  "minimumTrendDays": 3,
+  "steadyRangePercent": 12,
+  "changeThresholdPercent": 8,
+  "version": 1
+}

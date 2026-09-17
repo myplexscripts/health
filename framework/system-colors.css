@@ -1,0 +1,157 @@
+/* GlassKit system colour foundation.
+   Values mirror Apple's current iOS system colours supplied by the HIG.
+   Semantic aliases keep app code independent from appearance and contrast mode. */
+
+:root {
+  /* System accents, default light */
+  --ios-red: rgb(255 56 60);
+  --ios-orange: rgb(255 141 40);
+  --ios-yellow: rgb(255 204 0);
+  --ios-green: rgb(52 199 89);
+  --ios-mint: rgb(0 200 179);
+  --ios-teal: rgb(0 195 208);
+  --ios-cyan: rgb(0 192 232);
+  --ios-blue: rgb(0 136 255);
+  --ios-indigo: rgb(97 85 245);
+  --ios-purple: rgb(203 48 224);
+  --ios-pink: rgb(255 45 85);
+  --ios-brown: rgb(172 127 94);
+
+  /* UIKit system grays, default light */
+  --ios-gray: rgb(142 142 147);
+  --ios-gray-2: rgb(174 174 178);
+  --ios-gray-3: rgb(199 199 204);
+  --ios-gray-4: rgb(209 209 214);
+  --ios-gray-5: rgb(229 229 234);
+  --ios-gray-6: rgb(242 242 247);
+
+  /* Semantic surfaces */
+  --ios-background: rgb(255 255 255);
+  --ios-background-secondary: var(--ios-gray-6);
+  --ios-background-tertiary: rgb(255 255 255);
+
+  /* Apple's system fill family. */
+  --ios-fill: rgb(120 120 128 / 20%);
+  --ios-fill-secondary: rgb(120 120 128 / 16%);
+  --ios-fill-tertiary: rgb(118 118 128 / 12%);
+  --ios-fill-quaternary: rgb(116 116 128 / 8%);
+
+  /* Separators use Apple's neutral label family rather than arbitrary gray. */
+  --ios-separator: rgb(60 60 67 / 29%);
+  --ios-separator-opaque: rgb(198 198 200);
+
+  /* Public GlassKit aliases. Existing ios-* variables remain for compatibility. */
+  --glasskit-red: var(--ios-red);
+  --glasskit-orange: var(--ios-orange);
+  --glasskit-yellow: var(--ios-yellow);
+  --glasskit-green: var(--ios-green);
+  --glasskit-mint: var(--ios-mint);
+  --glasskit-teal: var(--ios-teal);
+  --glasskit-cyan: var(--ios-cyan);
+  --glasskit-blue: var(--ios-blue);
+  --glasskit-indigo: var(--ios-indigo);
+  --glasskit-purple: var(--ios-purple);
+  --glasskit-pink: var(--ios-pink);
+  --glasskit-brown: var(--ios-brown);
+  --glasskit-gray: var(--ios-gray);
+  --glasskit-gray-2: var(--ios-gray-2);
+  --glasskit-gray-3: var(--ios-gray-3);
+  --glasskit-gray-4: var(--ios-gray-4);
+  --glasskit-gray-5: var(--ios-gray-5);
+  --glasskit-gray-6: var(--ios-gray-6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* System accents, default dark */
+    --ios-red: rgb(255 66 69);
+    --ios-orange: rgb(255 146 48);
+    --ios-yellow: rgb(255 214 0);
+    --ios-green: rgb(48 209 88);
+    --ios-mint: rgb(0 218 195);
+    --ios-teal: rgb(0 210 224);
+    --ios-cyan: rgb(60 211 254);
+    --ios-blue: rgb(0 145 255);
+    --ios-indigo: rgb(109 124 255);
+    --ios-purple: rgb(219 52 242);
+    --ios-pink: rgb(255 55 95);
+    --ios-brown: rgb(183 138 102);
+
+    /* UIKit system grays, default dark */
+    --ios-gray: rgb(142 142 147);
+    --ios-gray-2: rgb(99 99 102);
+    --ios-gray-3: rgb(72 72 74);
+    --ios-gray-4: rgb(58 58 60);
+    --ios-gray-5: rgb(44 44 46);
+    --ios-gray-6: rgb(28 28 30);
+
+    --ios-background: rgb(0 0 0);
+    --ios-background-secondary: var(--ios-gray-6);
+    --ios-background-tertiary: var(--ios-gray-5);
+
+    --ios-fill: rgb(120 120 128 / 36%);
+    --ios-fill-secondary: rgb(120 120 128 / 32%);
+    --ios-fill-tertiary: rgb(118 118 128 / 24%);
+    --ios-fill-quaternary: rgb(118 118 128 / 18%);
+
+    --ios-separator: rgb(84 84 88 / 60%);
+    --ios-separator-opaque: rgb(56 56 58);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    /* System accents, increased contrast light */
+    --ios-red: rgb(233 21 45);
+    --ios-orange: rgb(197 83 0);
+    --ios-yellow: rgb(161 106 0);
+    --ios-green: rgb(0 137 50);
+    --ios-mint: rgb(0 133 117);
+    --ios-teal: rgb(0 129 152);
+    --ios-cyan: rgb(0 126 174);
+    --ios-blue: rgb(30 110 244);
+    --ios-indigo: rgb(86 74 222);
+    --ios-purple: rgb(176 47 194);
+    --ios-pink: rgb(231 18 77);
+    --ios-brown: rgb(149 109 81);
+
+    /* UIKit system grays, increased contrast light */
+    --ios-gray: rgb(108 108 112);
+    --ios-gray-2: rgb(142 142 147);
+    --ios-gray-3: rgb(174 174 178);
+    --ios-gray-4: rgb(188 188 192);
+    --ios-gray-5: rgb(216 216 220);
+    --ios-gray-6: rgb(235 235 240);
+
+    --ios-background-secondary: var(--ios-gray-6);
+  }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+  :root {
+    /* System accents, increased contrast dark */
+    --ios-red: rgb(255 97 101);
+    --ios-orange: rgb(255 160 86);
+    --ios-yellow: rgb(254 223 67);
+    --ios-green: rgb(74 217 104);
+    --ios-mint: rgb(84 223 203);
+    --ios-teal: rgb(59 221 236);
+    --ios-cyan: rgb(109 217 255);
+    --ios-blue: rgb(92 184 255);
+    --ios-indigo: rgb(167 170 255);
+    --ios-purple: rgb(234 141 255);
+    --ios-pink: rgb(255 138 196);
+    --ios-brown: rgb(219 166 121);
+
+    /* UIKit system grays, increased contrast dark */
+    --ios-gray: rgb(174 174 178);
+    --ios-gray-2: rgb(124 124 128);
+    --ios-gray-3: rgb(84 84 86);
+    --ios-gray-4: rgb(68 68 70);
+    --ios-gray-5: rgb(54 54 56);
+    --ios-gray-6: rgb(36 36 38);
+
+    --ios-background-secondary: var(--ios-gray-6);
+    --ios-background-tertiary: var(--ios-gray-5);
+  }
+}

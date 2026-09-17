@@ -1,0 +1,36 @@
+:root {
+  /* Keep the current system tint for controls, but use a darker semantic link
+     colour where small text needs stronger contrast on light backgrounds. */
+  --ios-link: #0062cc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root { --ios-link: #5cb8ff; }
+}
+
+a,
+.ios-link,
+.ios-button--plain { color: var(--ios-link); }
+
+.ios-text-accent { color: var(--ios-link); }
+
+/* Text that carries meaning never uses quaternary/decorative contrast. */
+.ios-empty-state__message,
+.ios-content-unavailable__description,
+.ios-callout-box__message,
+.ios-key-value__key,
+.ios-inline-message__text,
+.ios-collection__subtitle { color: var(--ios-label-secondary); }
+
+/* Decorative separators and disabled states can remain lower contrast because
+   they don't carry information by themselves. */
+button:disabled,
+[aria-disabled="true"] { opacity: .55; }
+
+@media (prefers-contrast: more) {
+  :root { --ios-link: #005bb5; }
+}
+
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+  :root { --ios-link: #8acbff; }
+}

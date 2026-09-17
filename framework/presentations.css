@@ -1,0 +1,35 @@
+/* Source-aware transient presentations */
+
+.ios-overlay[data-ios-action-anchored="true"] {
+  display: block;
+  padding: 0;
+}
+
+.ios-overlay[data-ios-action-anchored="true"] .ios-action-sheet {
+  position: fixed;
+  left: var(--ios-action-left, 12px);
+  top: var(--ios-action-top, 72px);
+  width: min(420px, calc(100vw - 24px));
+  margin: 0;
+  transform: scale(.88);
+  opacity: 0;
+  transform-origin: var(--ios-action-source-x, 50%) 0;
+  transition: transform 210ms var(--ios-ease), opacity 150ms ease;
+}
+
+.ios-overlay[data-ios-action-anchored="true"].is-open .ios-action-sheet {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Current inline action sheets dismiss by choosing an action or tapping outside. */
+.ios-overlay[data-ios-action-anchored="true"] .ios-action-sheet__cancel { display: none; }
+
+/* A source-aware action surface reads as one compact transient group. */
+.ios-overlay[data-ios-action-anchored="true"] .ios-action-sheet__group {
+  box-shadow: var(--ios-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ios-overlay[data-ios-action-anchored="true"] .ios-action-sheet { transform: none; }
+}
