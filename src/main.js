@@ -11,7 +11,7 @@ import 'framework7/components/dialog/css';
 import 'framework7/components/actions/css';
 import 'framework7/components/tabs/css';
 import 'framework7/components/searchbar/css';
-import 'framework7-icons/css/framework7-icons.css';
+import './icons.css';
 import './styles.css';
 
 Framework7.use([Sheet, Toast, Dialog, Actions, Tabs]);
