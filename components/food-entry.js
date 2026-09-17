@@ -1,7 +1,7 @@
 import { defineComponent } from '../framework/framework.js';
 import {
   backHeader, field, formDataObject, localDateTimeValue, makeId, numberValue, selectField, textField, toISODate
-} from './shared.js';
+} from './shared.js?v=1.1.2';
 
 function nutritionFields(values = {}) {
   return `<div class="health-form-grid">

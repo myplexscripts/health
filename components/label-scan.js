@@ -1,5 +1,5 @@
 import { defineComponent } from '../framework/framework.js';
-import { backHeader } from './shared.js';
+import { backHeader } from './shared.js?v=1.1.2';
 
 let tesseractPromise;
 

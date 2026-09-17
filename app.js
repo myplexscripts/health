@@ -4,15 +4,15 @@ root?.removeAttribute('data-ios-app');
 const [framework, components, shared] = await Promise.all([
   import('./framework/framework.js'),
   Promise.all([
-    import('./components/food-entry.js'),
-    import('./components/label-scan.js'),
-    import('./components/health-entry.js'),
-    import('./components/entry-detail.js'),
-    import('./components/goals.js'),
-    import('./components/onboarding.js'),
-    import('./components/profile.js')
+    import('./components/food-entry.js?v=1.1.2'),
+    import('./components/label-scan.js?v=1.1.2'),
+    import('./components/health-entry.js?v=1.1.2'),
+    import('./components/entry-detail.js?v=1.1.2'),
+    import('./components/goals.js?v=1.1.2'),
+    import('./components/onboarding.js?v=1.1.2'),
+    import('./components/profile.js?v=1.1.2')
   ]),
-  import('./components/shared.js')
+  import('./components/shared.js?v=1.1.2')
 ]);
 
 const { GlassKitApp, GlassKitStorage } = framework;
