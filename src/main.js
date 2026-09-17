@@ -559,5 +559,5 @@ document.querySelector('.js-reset-data').addEventListener('click', () => {
 renderAll();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  window.addEventListener('load', () => navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`));
 }
