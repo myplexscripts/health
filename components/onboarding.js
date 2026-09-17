@@ -51,7 +51,7 @@ export const Onboarding = defineComponent({
       }
       app.store.dispatch('completeOnboarding', { name: state.name, ...values });
       app.toast.show(`Welcome, ${state.name}`);
-      router.replace('/today');
+      router.navigate('/today', { direction: 'back', replace: true });
     }
   }
 });
