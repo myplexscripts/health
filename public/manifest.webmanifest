@@ -1,0 +1,17 @@
+{
+  "name": "Health",
+  "short_name": "Health",
+  "description": "Health and nutrition tracking that stays on your device.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#f2f2f7",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
