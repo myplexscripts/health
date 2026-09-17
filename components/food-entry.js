@@ -12,6 +12,7 @@ function nutritionFields(values = {}) {
     ${field('Fibre', 'fibre', { value: values.fibre ?? '', unit: 'g', max: 500 })}
     ${field('Sugars', 'sugars', { value: values.sugars ?? '', unit: 'g', max: 1000 })}
     ${field('Sodium', 'sodium', { value: values.sodium ?? '', unit: 'mg', max: 50000 })}
+    ${field('Vitamin D', 'vitaminD', { value: values.vitaminD ?? '', unit: 'mcg', max: 1000 })}
   </div>`;
 }
 
@@ -57,7 +58,7 @@ export const FoodEntry = defineComponent({
         id: makeId('food'), type: 'food', name: values.name.trim(), serving: values.serving.trim(), meal: values.meal,
         datetime: toISODate(values.datetime), calories: numberValue(values.calories), protein: numberValue(values.protein),
         carbs: numberValue(values.carbs), fat: numberValue(values.fat), fibre: numberValue(values.fibre),
-        sugars: numberValue(values.sugars), sodium: numberValue(values.sodium)
+        sugars: numberValue(values.sugars), sodium: numberValue(values.sodium), vitaminD: numberValue(values.vitaminD)
       };
       app.store.dispatch('addEntry', entry);
       app.toast.show(`${entry.name} added to your log`);

@@ -8,17 +8,19 @@ const [framework, components, shared] = await Promise.all([
     import('./components/label-scan.js'),
     import('./components/health-entry.js'),
     import('./components/entry-detail.js'),
-    import('./components/goals.js')
+    import('./components/goals.js'),
+    import('./components/onboarding.js'),
+    import('./components/profile.js')
   ]),
   import('./components/shared.js')
 ]);
 
 const { GlassKitApp, GlassKitStorage } = framework;
-const [{ FoodEntry }, { LabelScan }, { HealthEntry }, { EntryDetail }, { Goals }] = components;
-const { escapeHTML, formatDateTime } = shared;
+const [{ FoodEntry }, { LabelScan }, { HealthEntry }, { EntryDetail }, { Goals }, { Onboarding }, { Profile }] = components;
+const { escapeHTML, formatDateTime, NUTRIENTS, normaliseGoalConfig } = shared;
 
 const storage = new GlassKitStorage({ namespace: 'health' });
-const defaultGoals = { calories: 2200, protein: 120, carbs: 260, fat: 75, fibre: 30, sodium: 2300 };
+const defaultGoals = Object.fromEntries(NUTRIENTS.map(nutrient => [nutrient.key, nutrient.target]));
 
 function dayStart(daysAgo = 0) {
   const date = new Date();
@@ -49,15 +51,15 @@ function buildSampleEntries() {
     const dinner = dinners[daysAgo];
     entries.push({
       id: `sample-breakfast-${daysAgo}`, type: 'food', name: daysAgo === 0 ? 'Oatmeal and berries' : 'Yogurt oat bowl', serving: '1 bowl', meal: 'breakfast', datetime: atTime(daysAgo, 8, 10),
-      calories: breakfast[0], protein: breakfast[1], carbs: breakfast[2], fat: breakfast[3], fibre: breakfast[4], sugars: 18, sodium: breakfast[5]
+      calories: breakfast[0], protein: breakfast[1], carbs: breakfast[2], fat: breakfast[3], fibre: breakfast[4], sugars: 18, sodium: breakfast[5], vitaminD: 2.5
     });
     entries.push({
       id: `sample-dinner-${daysAgo}`, type: 'food', name: daysAgo === 0 ? 'Chicken grain bowl' : 'Grain bowl', serving: '1 bowl', meal: daysAgo === 0 ? 'lunch' : 'dinner', datetime: atTime(daysAgo, daysAgo === 0 ? 12 : 18, 40),
-      calories: dinner[0], protein: dinner[1], carbs: dinner[2], fat: dinner[3], fibre: dinner[4], sugars: 9, sodium: dinner[5]
+      calories: dinner[0], protein: dinner[1], carbs: dinner[2], fat: dinner[3], fibre: dinner[4], sugars: 9, sodium: dinner[5], vitaminD: 3
     });
     entries.push({
       id: `sample-snack-${daysAgo}`, type: 'food', name: daysAgo === 0 ? 'Greek yogurt' : 'Afternoon snack', serving: '1 serving', meal: 'snack', datetime: atTime(daysAgo, 15, 30),
-      calories: snacks[daysAgo], protein: 16, carbs: 22, fat: 6, fibre: 3, sugars: 12, sodium: 120
+      calories: snacks[daysAgo], protein: 16, carbs: 22, fat: 6, fibre: 3, sugars: 12, sodium: 120, vitaminD: 1.5
     });
   }
   [[0, 124, 78, 68], [1, 127, 80, 71], [2, 122, 77, 66], [4, 129, 81, 72], [6, 126, 79, 69]].forEach(([daysAgo, systolic, diastolic, pulse]) => {
@@ -71,16 +73,20 @@ const saved = storage.get('state');
 const initialState = saved && Array.isArray(saved.entries) ? {
   entries: saved.entries,
   goals: { ...defaultGoals, ...(saved.goals || {}) },
+  goalConfig: normaliseGoalConfig(saved.goalConfig),
+  profile: { name: '', onboarded: false, ...(saved.profile || {}) },
   preferences: { descriptiveInsights: true, ...(saved.preferences || {}) },
   usingSampleData: Boolean(saved.usingSampleData)
 } : {
-  entries: buildSampleEntries(), goals: defaultGoals, preferences: { descriptiveInsights: true }, usingSampleData: true
+  entries: buildSampleEntries(), goals: defaultGoals, goalConfig: normaliseGoalConfig(), profile: { name: '', onboarded: false }, preferences: { descriptiveInsights: true }, usingSampleData: true
 };
 
 function persist(state) {
   storage.set('state', {
     entries: state.entries,
     goals: state.goals,
+    goalConfig: state.goalConfig,
+    profile: state.profile,
     preferences: state.preferences,
     usingSampleData: state.usingSampleData
   });
@@ -100,6 +106,7 @@ function shell() {
 }
 
 root.innerHTML = shell();
+root.classList.toggle('health-is-onboarding', !initialState.profile.onboarded);
 
 export const app = new GlassKitApp({
   root,
@@ -108,7 +115,8 @@ export const app = new GlassKitApp({
   request: { timeout: 10000, cacheTTL: 3600000 },
   router: { mode: 'hash', defaultRoute: '/', componentCacheSize: 10 },
   routes: [
-    { name: 'today', path: '/', tab: 'today' },
+    { path: '/', redirect: initialState.profile.onboarded ? '/today' : '/onboarding' },
+    { name: 'today', path: '/today', tab: 'today' },
     { name: 'trends', path: '/trends', tab: 'trends' },
     { name: 'log', path: '/log', tab: 'log' },
     { name: 'settings', path: '/settings', tab: 'settings' },
@@ -117,7 +125,9 @@ export const app = new GlassKitApp({
     { name: 'health-new', path: '/health/new', tab: 'today', component: HealthEntry, cache: false, cacheComponent: false },
     { name: 'entry', path: '/entry/:id', tab: 'log', component: EntryDetail, cache: false },
     { name: 'goals', path: '/goals', tab: 'settings', component: Goals, cache: false },
-    { path: '*', redirect: '/' }
+    { name: 'profile', path: '/profile', tab: 'settings', component: Profile, cache: false },
+    { name: 'onboarding', path: '/onboarding', component: Onboarding, cache: false, cacheComponent: false },
+    { path: '*', redirect: initialState.profile.onboarded ? '/today' : '/onboarding' }
   ],
   store: {
     state: { ...initialState, trendDays: 7, historyFilter: 'all', insightRules: { minimumTrendDays: 3, steadyRangePercent: 12, changeThresholdPercent: 8 } },
@@ -129,7 +139,14 @@ export const app = new GlassKitApp({
         persist(state);
       },
       deleteEntry({ state, set }, id) { set('entries', state.entries.filter(entry => entry.id !== id)); persist(state); },
-      setGoals({ state, set }, goals) { set('goals', { ...state.goals, ...goals }); persist(state); },
+      setGoals({ state, set }, { goals, goalConfig }) { set('goals', { ...state.goals, ...goals }); set('goalConfig', normaliseGoalConfig(goalConfig)); persist(state); },
+      setProfile({ state, set }, profile) { set('profile', { ...state.profile, ...profile }); persist(state); },
+      completeOnboarding({ state, set }, { name, goals, goalConfig }) {
+        set('profile', { name, onboarded: true });
+        set('goals', { ...state.goals, ...goals });
+        set('goalConfig', normaliseGoalConfig(goalConfig));
+        persist(state);
+      },
       setPreferences({ state, set }, preferences) { set('preferences', { ...state.preferences, ...preferences }); persist(state); },
       clearData({ state, set }) { set('entries', []); set('usingSampleData', false); persist(state); },
       restoreSample({ state, set }) { set('entries', buildSampleEntries()); set('usingSampleData', true); persist(state); }
@@ -148,9 +165,9 @@ function formatDay(value, options = {}) {
 
 function foodTotals(entries) {
   return entries.filter(entry => entry.type === 'food').reduce((total, entry) => {
-    ['calories', 'protein', 'carbs', 'fat', 'fibre', 'sugars', 'sodium'].forEach(key => { total[key] += Number(entry[key]) || 0; });
+    NUTRIENTS.forEach(({ key }) => { total[key] += Number(entry[key]) || 0; });
     return total;
-  }, { calories: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, sugars: 0, sodium: 0 });
+  }, Object.fromEntries(NUTRIENTS.map(({ key }) => [key, 0])));
 }
 
 function clamp(value, min = 0, max = 100) { return Math.min(max, Math.max(min, value)); }
@@ -162,9 +179,14 @@ function sampleBanner() {
   return `<div class="ios-inline-message health-inline-message health-sample-banner"><span class="health-inline-icon" style="background:var(--ios-indigo)"><span data-ios-symbol="sparkles"></span></span><div class="ios-inline-message__body"><div class="ios-inline-message__title">Sample data</div><div class="ios-inline-message__text">Explore the app now. Your first saved entry replaces these examples.</div></div><button class="ios-button ios-button--plain" type="button" data-clear-sample>Clear</button></div>`;
 }
 
-function nutritionProgress(label, value, goal, unit, colour) {
+function nutritionProgress(nutrient, value, goal, setting) {
   const raw = percent(value, goal);
-  return `<div class="health-nutrient"><div class="health-nutrient__header"><span>${label}</span><strong>${round(value)}<small> / ${round(goal)} ${unit}</small></strong></div><div class="health-progress-track" role="progressbar" aria-label="${label}: ${round(value)} of ${round(goal)} ${unit}" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${Math.round(value)}"><span style="width:${clamp(raw)}%;background:${colour}"></span></div><span class="health-nutrient__percent">${raw}%</span></div>`;
+  const over = setting.mode === 'maximum' && value > goal;
+  const status = setting.mode === 'maximum'
+    ? (over ? `${round(value - goal)} ${nutrient.unit} over` : `${round(Math.max(0, goal - value))} ${nutrient.unit} left`)
+    : `${raw}%`;
+  const colour = over ? 'var(--ios-red)' : nutrient.colour;
+  return `<div class="health-nutrient"><div class="health-nutrient__header"><span>${nutrient.label}<small>${setting.mode === 'maximum' ? ' limit' : ' goal'}</small></span><strong>${round(value)}<small> / ${round(goal)} ${nutrient.unit}</small></strong></div><div class="health-progress-track" role="progressbar" aria-label="${nutrient.label}: ${round(value)} of ${round(goal)} ${nutrient.unit}" aria-valuemin="0" aria-valuemax="${goal}" aria-valuenow="${Math.round(value)}"><span style="width:${clamp(raw)}%;background:${colour}"></span></div><span class="health-nutrient__percent${over ? ' is-over' : ''}">${status}</span></div>`;
 }
 
 function entryIcon(entry) {
@@ -194,14 +216,14 @@ function entryRow(entry) {
   return `<button class="ios-row ios-row--disclosure" type="button" data-entry-row data-entry-category="${entry.type === 'food' ? 'nutrition' : 'health'}" data-entry-search="${escapeHTML(`${entryTitle(entry)} ${subtitle}`.toLowerCase())}" data-glasskit-link="/entry/${encodeURIComponent(entry.id)}"><span class="ios-row__icon ${colourClass}"><span data-ios-symbol="${icon}"></span></span><span class="ios-row__body"><span class="ios-row__title">${escapeHTML(entryTitle(entry))}</span><span class="ios-row__subtitle">${escapeHTML(subtitle)}</span></span><span class="ios-row__value health-row-value">${escapeHTML(entryValue(entry))}</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>`;
 }
 
-function describeToday(totals, goals) {
+function describeToday(totals, goals, config) {
   if (!totals.calories) return 'Log a meal to see a plain-language summary of your day.';
-  const proteinPct = percent(totals.protein, goals.protein);
-  const fibrePct = percent(totals.fibre, goals.fibre);
-  if (proteinPct >= 75 && fibrePct >= 70) return 'Protein and fibre are both building steadily toward your goals.';
-  if (fibrePct < 45) return 'Fibre is the furthest from its target today. Your next meal can help close the gap.';
-  if (proteinPct < 45) return 'Protein is the furthest from its target today. You still have room to balance the day.';
-  return 'Your nutrition is tracking close to the shape of your daily goals.';
+  const active = NUTRIENTS.filter(nutrient => nutrient.key !== 'calories' && config[nutrient.key]?.enabled);
+  const exceeded = active.find(nutrient => config[nutrient.key].mode === 'maximum' && totals[nutrient.key] > goals[nutrient.key]);
+  if (exceeded) return `${exceeded.label} is above your daily limit. Review the foods in your log for context.`;
+  const minimums = active.filter(nutrient => config[nutrient.key].mode === 'minimum').sort((a, b) => percent(totals[a.key], goals[a.key]) - percent(totals[b.key], goals[b.key]));
+  if (minimums[0] && percent(totals[minimums[0].key], goals[minimums[0].key]) < 50) return `${minimums[0].label} is furthest from your goal today. Your next meal can help close the gap.`;
+  return active.length ? 'Your nutrition is tracking steadily across your chosen goals and limits.' : 'Your energy log is building a clearer picture of the day.';
 }
 
 function renderToday() {
@@ -212,30 +234,29 @@ function renderToday() {
   const health = entries.filter(entry => entry.type === 'health');
   const totals = foodTotals(foods);
   const goals = app.store.state.goals;
+  const goalConfig = app.store.state.goalConfig;
+  const activeNutrients = NUTRIENTS.filter(nutrient => nutrient.key !== 'calories' && goalConfig[nutrient.key]?.enabled);
   const energyPct = percent(totals.calories, goals.calories);
   const remaining = Math.max(0, goals.calories - totals.calories);
+  const name = app.store.state.profile?.name || 'there';
   const latestBP = health.find(entry => entry.readingType === 'blood-pressure') || app.store.state.entries.find(entry => entry.readingType === 'blood-pressure');
   target.innerHTML = `
-    <div class="health-page-heading"><div><p class="health-eyebrow">${formatDay(new Date())}</p><h1 class="ios-large-title">Today</h1></div><button class="health-avatar" type="button" data-glasskit-link="/settings" aria-label="Open Settings"><span data-ios-symbol="person"></span></button></div>
-    ${sampleBanner()}
-    <section class="ios-section"><article class="ios-card health-energy-card">
-      <div class="health-energy-ring" style="--health-progress:${clamp(energyPct) * 3.6}deg" role="img" aria-label="${energyPct}% of energy goal"><div><strong>${Math.round(totals.calories).toLocaleString('en-CA')}</strong><span>of ${goals.calories.toLocaleString('en-CA')} kcal</span></div></div>
-      <div class="health-energy-copy"><span class="health-status-pill"><span></span>${energyPct > 100 ? 'Over goal' : 'On track'}</span><h2>${remaining.toLocaleString('en-CA')} kcal left</h2><p>${escapeHTML(describeToday(totals, goals))}</p></div>
-    </article></section>
-    <section class="ios-section"><div class="health-action-grid">
-      <button class="health-action-card" type="button" data-glasskit-link="/scan"><span class="health-action-card__icon" style="background:var(--ios-blue)"><span data-ios-symbol="scanLine"></span></span><span><strong>Scan Label</strong><small>Use the camera</small></span></button>
-      <button class="health-action-card" type="button" data-glasskit-link="/food/new"><span class="health-action-card__icon" style="background:var(--ios-orange)"><span data-ios-symbol="utensils"></span></span><span><strong>Add Food</strong><small>Enter it manually</small></span></button>
-      <button class="health-action-card" type="button" data-glasskit-link="/health/new"><span class="health-action-card__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span><strong>Health Data</strong><small>BP, weight, glucose</small></span></button>
+    <div class="health-page-heading"><div><p class="health-eyebrow">${formatDay(new Date())}</p><h1 class="ios-large-title">Hi, ${escapeHTML(name)}</h1></div><button class="health-avatar" type="button" data-glasskit-link="/settings" aria-label="Open Settings"><span data-ios-symbol="person"></span></button></div>
+    <section class="ios-section health-log-launcher" aria-labelledby="quick-log-title"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title" id="quick-log-title">Log something</h2></div></div><div class="health-action-grid">
+      <button class="health-action-card" type="button" data-glasskit-link="/scan"><span class="health-action-card__icon" style="background:var(--ios-blue)"><span data-ios-symbol="scanLine"></span></span><span><strong>Scan</strong><small>Nutrition label</small></span></button>
+      <button class="health-action-card" type="button" data-glasskit-link="/food/new"><span class="health-action-card__icon" style="background:var(--ios-orange)"><span data-ios-symbol="utensils"></span></span><span><strong>Food</strong><small>Enter manually</small></span></button>
+      <button class="health-action-card" type="button" data-glasskit-link="/health/new"><span class="health-action-card__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span><strong>Health</strong><small>BP and more</small></span></button>
     </div></section>
-    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Nutrition</h2><div class="ios-section-heading__subtitle">Your daily targets</div></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/trends">See Trends</button></div>
+    ${sampleBanner()}
+    ${goalConfig.calories?.enabled ? `<section class="ios-section"><article class="ios-card health-energy-card">
+      <div class="health-energy-ring" style="--health-progress:${clamp(energyPct) * 3.6}deg" role="img" aria-label="${energyPct}% of energy goal"><div><strong>${Math.round(totals.calories).toLocaleString('en-CA')}</strong><span>of ${goals.calories.toLocaleString('en-CA')} kcal</span></div></div>
+      <div class="health-energy-copy"><span class="health-status-pill"><span></span>${energyPct > 100 ? 'Over goal' : 'On track'}</span><h2>${remaining.toLocaleString('en-CA')} kcal left</h2><p>${escapeHTML(describeToday(totals, goals, goalConfig))}</p></div>
+    </article></section>` : ''}
+    ${activeNutrients.length ? `<section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Nutrition</h2><div class="ios-section-heading__subtitle">Your chosen goals and limits</div></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/trends">See Trends</button></div>
       <article class="ios-card health-nutrition-card">
-        ${nutritionProgress('Protein', totals.protein, goals.protein, 'g', 'var(--ios-red)')}
-        ${nutritionProgress('Carbohydrates', totals.carbs, goals.carbs, 'g', 'var(--ios-orange)')}
-        ${nutritionProgress('Fat', totals.fat, goals.fat, 'g', 'var(--ios-purple)')}
-        ${nutritionProgress('Fibre', totals.fibre, goals.fibre, 'g', 'var(--ios-green)')}
-        ${nutritionProgress('Sodium', totals.sodium, goals.sodium, 'mg', 'var(--ios-blue)')}
+        ${activeNutrients.map(nutrient => nutritionProgress(nutrient, totals[nutrient.key], goals[nutrient.key], goalConfig[nutrient.key])).join('')}
       </article>
-    </section>
+    </section>` : ''}
     <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Health</h2><div class="ios-section-heading__subtitle">Your most recent readings</div></div></div>
       <article class="ios-card health-vital-card">${latestBP ? `<div class="health-vital-card__icon"><span data-ios-symbol="heartPulse"></span></div><div><span>Blood Pressure</span><strong>${latestBP.systolic}<small>/</small>${latestBP.diastolic}</strong><p>mmHg • ${formatDay(latestBP.datetime, { short: true })}</p></div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/entry/${encodeURIComponent(latestBP.id)}">View</button>` : `<div><strong>No readings yet</strong><p>Add your first blood pressure reading.</p></div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/health/new">Add</button>`}</article>
     </section>
@@ -367,10 +388,11 @@ function filterLogRows() {
 
 function renderSettings() {
   const target = root.querySelector('[data-settings-content]');
-  const goals = app.store.state.goals;
+  const activeGoals = NUTRIENTS.filter(nutrient => app.store.state.goalConfig[nutrient.key]?.enabled).length;
+  const profileName = app.store.state.profile?.name || 'Not set';
   target.innerHTML = `
     <div class="health-page-heading"><div><p class="health-eyebrow">Make Health yours</p><h1 class="ios-large-title">Settings</h1></div></div>
-    <section class="ios-section"><div class="ios-section__header">Goals</div><div class="ios-list"><button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/goals"><span class="ios-row__icon" style="background:var(--ios-green)"><span data-ios-symbol="target"></span></span><span class="ios-row__body"><span class="ios-row__title">Nutrition Goals</span><span class="ios-row__subtitle">Energy and daily nutrient targets</span></span><span class="ios-row__value">${goals.calories.toLocaleString('en-CA')} kcal</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></div></section>
+    <section class="ios-section"><div class="ios-section__header">Profile and Goals</div><div class="ios-list"><button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/profile"><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="person"></span></span><span class="ios-row__body"><span class="ios-row__title">Name</span><span class="ios-row__subtitle">How Health greets you</span></span><span class="ios-row__value">${escapeHTML(profileName)}</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button><button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/goals"><span class="ios-row__icon" style="background:var(--ios-green)"><span data-ios-symbol="target"></span></span><span class="ios-row__body"><span class="ios-row__title">Nutrition Goals</span><span class="ios-row__subtitle">Goals and daily limits</span></span><span class="ios-row__value">${activeGoals} active</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></div></section>
     <section class="ios-section"><div class="ios-section__header">Understanding Your Data</div><div class="ios-list"><label class="ios-row"><span class="ios-row__icon" style="background:var(--ios-indigo)"><span data-ios-symbol="sparkles"></span></span><span class="ios-row__body"><span class="ios-row__title">Trend Insights</span><span class="ios-row__subtitle">Describe changes in your own log</span></span><span class="ios-switch"><input type="checkbox" data-insights-toggle ${app.store.state.preferences.descriptiveInsights ? 'checked' : ''} aria-label="Trend insights"><span class="ios-switch__track"></span></span></label></div><div class="ios-section__footer">Insights describe your entries and never diagnose a health condition.</div></section>
     <section class="ios-section"><div class="ios-section__header">Your Data</div><div class="ios-list"><button class="ios-row ios-row--disclosure" type="button" data-export-data><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="download"></span></span><span class="ios-row__body"><span class="ios-row__title">Export Data</span><span class="ios-row__subtitle">Download a JSON backup</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>${app.store.state.usingSampleData ? `<button class="ios-row ios-row--disclosure" type="button" data-clear-sample><span class="ios-row__icon" style="background:var(--ios-orange)"><span data-ios-symbol="refresh"></span></span><span class="ios-row__body"><span class="ios-row__title">Clear Sample Data</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>` : ''}<button class="ios-row ios-row--disclosure health-destructive-row" type="button" data-erase-data><span class="ios-row__icon"><span data-ios-symbol="trash"></span></span><span class="ios-row__body"><span class="ios-row__title">Erase All Data</span><span class="ios-row__subtitle">This cannot be undone</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></div></section>
     <section class="ios-section"><article class="ios-card health-privacy-card"><span class="health-privacy-card__icon"><span data-ios-symbol="lock"></span></span><div><h2>Your data stays on this device</h2><p>Health stores entries in this browser. Nothing is uploaded unless you choose to export it.</p></div></article></section>
@@ -413,7 +435,7 @@ root.addEventListener('click', async event => {
   }
   if (event.target.closest('[data-export-data]')) {
     await app.loading.during(Promise.resolve().then(() => {
-      const data = JSON.stringify({ exportedAt: new Date().toISOString(), entries: app.store.state.entries, goals: app.store.state.goals }, null, 2);
+      const data = JSON.stringify({ exportedAt: new Date().toISOString(), profile: app.store.state.profile, entries: app.store.state.entries, goals: app.store.state.goals, goalConfig: app.store.state.goalConfig }, null, 2);
       const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
       const link = document.createElement('a');
       link.href = url; link.download = `health-export-${dateKey(new Date())}.json`; link.click();
@@ -435,10 +457,21 @@ root.addEventListener('change', event => {
 
 app.store.subscribe('entries', renderAll);
 app.store.subscribe('goals', renderAll);
+app.store.subscribe('goalConfig', renderAll);
+app.store.subscribe('profile', renderAll);
 app.store.subscribe('preferences', renderAll);
 app.store.subscribe('usingSampleData', renderAll);
 app.store.subscribe('insightRules', renderTrends);
-app.on('routechange', () => requestAnimationFrame(syncRouteAccessibility));
+app.on('routechange', event => {
+  const path = event.detail?.to?.path || app.router.current?.path || '';
+  const onboarding = path === '/onboarding';
+  root.classList.toggle('health-is-onboarding', onboarding);
+  if (!app.store.state.profile.onboarded && !onboarding) {
+    app.replace('/onboarding');
+    return;
+  }
+  requestAnimationFrame(syncRouteAccessibility);
+});
 
 renderAll();
 syncRouteAccessibility();

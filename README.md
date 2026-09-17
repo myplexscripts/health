@@ -5,9 +5,10 @@ A local-first nutrition and health tracking web app built on the complete GlassK
 ## Features
 
 - Nutrition label capture with browser text recognition and editable review
-- Manual food entry with calories, macros, fibre, sugars, and sodium
+- Personal onboarding for a name and flexible nutrition goals or limits
+- Manual food entry with calories, macros, fibre, sugars, sodium, and vitamin D
 - Blood pressure, weight, and blood glucose logging
-- Daily goal progress, history, charts, and descriptive trend insights
+- Daily goal and limit progress, history, charts, and descriptive trend insights
 - Local browser storage, JSON export, dark mode, reduced motion, and accessible controls
 - GlassKit routing, reactive store, controllers, request helper, storage helper, Lucide icons, Apple system colours, and concentric radii
 

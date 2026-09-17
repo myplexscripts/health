@@ -58,7 +58,8 @@ function parseNutrition(text) {
     fibre: firstNumber(clean, [/(?:dietary\s+)?fi(?:bre|ber)\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i]),
     sugars: firstNumber(clean, [/(?:total\s+)?sugars?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i, /sucres?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i]),
     protein: firstNumber(clean, [/proteins?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i, /prot[ée]ines?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i]),
-    sodium: firstNumber(clean, [/sodium\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*mg/i])
+    sodium: firstNumber(clean, [/sodium\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*mg/i]),
+    vitaminD: firstNumber(clean, [/vitamin\s*d\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*(?:mcg|µg|ug)/i, /vitamine\s*d\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*(?:mcg|µg|ug)/i])
   };
 }
 
