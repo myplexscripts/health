@@ -380,6 +380,15 @@ function renderSettings() {
 
 function renderAll() { renderToday(); renderTrends(); renderLog(); renderSettings(); }
 
+function syncRouteAccessibility() {
+  root.querySelectorAll('.ios-tab-panel, .ios-push-screen').forEach(panel => {
+    const available = !panel.hidden && panel.classList.contains('is-active') && !panel.classList.contains('is-behind');
+    panel.inert = !available;
+    if (available) panel.removeAttribute('aria-hidden');
+    else panel.setAttribute('aria-hidden', 'true');
+  });
+}
+
 function openAddSheet() {
   const sheet = app.sheet.open({ title: 'Add to Health', cancel: 'Cancel', className: 'health-add-sheet', content: `<div class="ios-list"><button class="ios-row ios-row--disclosure" type="button" data-sheet-route="/scan"><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="scanLine"></span></span><span class="ios-row__body"><span class="ios-row__title">Scan Nutrition Label</span><span class="ios-row__subtitle">Take a photo and review the values</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button><button class="ios-row ios-row--disclosure" type="button" data-sheet-route="/food/new"><span class="ios-row__icon" style="background:var(--ios-orange)"><span data-ios-symbol="utensils"></span></span><span class="ios-row__body"><span class="ios-row__title">Enter Food Manually</span><span class="ios-row__subtitle">Log a meal, snack, or drink</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button><button class="ios-row ios-row--disclosure" type="button" data-sheet-route="/health/new"><span class="ios-row__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span class="ios-row__body"><span class="ios-row__title">Add Health Data</span><span class="ios-row__subtitle">Blood pressure, weight, or glucose</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></div>` });
   sheet.body.addEventListener('click', event => {
@@ -429,8 +438,10 @@ app.store.subscribe('goals', renderAll);
 app.store.subscribe('preferences', renderAll);
 app.store.subscribe('usingSampleData', renderAll);
 app.store.subscribe('insightRules', renderTrends);
+app.on('routechange', () => requestAnimationFrame(syncRouteAccessibility));
 
 renderAll();
+syncRouteAccessibility();
 root.setAttribute('aria-busy', 'false');
 
 app.request.get('./components/insight-rules.json', { cache: true, cacheTTL: 3600000 })
