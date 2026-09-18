@@ -1,7 +1,7 @@
-import { defineComponent } from '../framework/framework.js?v=1.3.0';
+import { defineComponent } from '../framework/framework.js?v=1.3.1';
 import {
   backHeader, field, formDataObject, localDateTimeValue, makeId, numberValue, NUTRIENTS, selectField, textField, toISODate
-} from './shared.js?v=1.3.0';
+} from './shared.js?v=1.3.1';
 
 const primaryKeys = ['calories', 'protein', 'carbs', 'fat', 'fibre', 'sugars', 'sodium'];
 const primaryNutrients = new Set(primaryKeys);

@@ -78,7 +78,7 @@ export class IOSApp {
 
   selectTab(name, animate = true) {
     const panel = this.root.querySelector(`[data-ios-tab-panel="${CSS.escape(name)}"]`);
-    if (!panel || name === this.activeTab) return;
+    if (!panel || (name === this.activeTab && !this.stack.length)) return;
     this.closeAllPushScreens();
     this.root.querySelectorAll('[data-ios-tab]').forEach(item => {
       const active = item.dataset.iosTab === name;

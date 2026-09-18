@@ -1,4 +1,4 @@
-import { mountComponent } from './component.js?v=1.3.0';
+import { mountComponent } from './component.js?v=1.3.1';
 
 function normalisePath(input = '/') {
   let path = String(input || '/').trim();

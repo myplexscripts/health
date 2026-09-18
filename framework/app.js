@@ -1,14 +1,14 @@
-import { IOSApp } from './ios.js?v=1.3.0';
-import { GlassKitRouter } from './router.js?v=1.3.0';
-import { GlassKitStore } from './store.js?v=1.3.0';
-import { GlassKitRequest } from './request.js?v=1.3.0';
-import { GlassKitStorage } from './storage.js?v=1.3.0';
-import { GlassKitPluginManager } from './plugins.js?v=1.3.0';
-import { createControllers } from './controllers.js?v=1.3.0';
-import { initIOSBehaviorRefinements, enhanceIOSBehavior } from './behavior.js?v=1.3.0';
-import { renderLucide } from './lucide.js?v=1.3.0';
+import { IOSApp } from './ios.js?v=1.3.1';
+import { GlassKitRouter } from './router.js?v=1.3.1';
+import { GlassKitStore } from './store.js?v=1.3.1';
+import { GlassKitRequest } from './request.js?v=1.3.1';
+import { GlassKitStorage } from './storage.js?v=1.3.1';
+import { GlassKitPluginManager } from './plugins.js?v=1.3.1';
+import { createControllers } from './controllers.js?v=1.3.1';
+import { initIOSBehaviorRefinements, enhanceIOSBehavior } from './behavior.js?v=1.3.1';
+import { renderLucide } from './lucide.js?v=1.3.1';
 
-export const GLASSKIT_VERSION = '1.3.0';
+export const GLASSKIT_VERSION = '1.3.1';
 
 export class GlassKitApp extends IOSApp {
   static globalPlugins = [];

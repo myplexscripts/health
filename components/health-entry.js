@@ -1,7 +1,7 @@
-import { defineComponent } from '../framework/framework.js?v=1.3.0';
+import { defineComponent } from '../framework/framework.js?v=1.3.1';
 import {
   backHeader, field, formDataObject, localDateTimeValue, makeId, numberValue, selectField, textField, toISODate
-} from './shared.js?v=1.3.0';
+} from './shared.js?v=1.3.1';
 
 function readingFields(type) {
   if (type === 'weight') return field('Weight', 'weight', { unit: 'kg', required: true, max: 500, step: '0.1' });

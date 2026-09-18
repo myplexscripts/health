@@ -1,5 +1,5 @@
-import { defineComponent } from '../framework/framework.js?v=1.3.0';
-import { backHeader, escapeHTML } from './shared.js?v=1.3.0';
+import { defineComponent } from '../framework/framework.js?v=1.3.1';
+import { backHeader, escapeHTML } from './shared.js?v=1.3.1';
 
 export const Profile = defineComponent({
   render({ store }) {

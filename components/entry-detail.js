@@ -1,5 +1,5 @@
-import { defineComponent } from '../framework/framework.js?v=1.3.0';
-import { backHeader, escapeHTML, formatDateTime, NUTRIENTS } from './shared.js?v=1.3.0';
+import { defineComponent } from '../framework/framework.js?v=1.3.1';
+import { backHeader, escapeHTML, formatDateTime, NUTRIENTS } from './shared.js?v=1.3.1';
 
 function metric(label, value, unit = '') {
   return `<div class="health-detail-metric"><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}${unit ? `<small>${escapeHTML(unit)}</small>` : ''}</strong></div>`;
