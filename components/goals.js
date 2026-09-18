@@ -1,5 +1,5 @@
 import { defineComponent } from '../framework/framework.js';
-import { backHeader, goalRows, goalsFromForm } from './shared.js?v=1.2.0';
+import { backHeader, goalRows, goalsFromForm } from './shared.js?v=1.2.1';
 
 export const Goals = defineComponent({
   render({ store }) {

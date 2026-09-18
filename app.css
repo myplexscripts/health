@@ -124,7 +124,7 @@
 .health-unit-field { padding-right: 11px; }
 .health-field-unit { flex: 0 0 auto; color: var(--ios-label-secondary); font-size: 14px; }
 .health-sticky-action { position: sticky; bottom: 4px; z-index: 4; padding: 8px; border-radius: 999px; background: color-mix(in srgb, var(--ios-background-secondary) 78%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
-.health-form-footer .ios-button { min-height: 34px; padding-inline: 4px; font-size: 14px; vertical-align: middle; }
+.health-form-footer .ios-button { min-height: 44px; padding-inline: 4px; font-size: 14px; vertical-align: middle; }
 .health-nutrient-details { margin-top: 18px; border-top: .5px solid var(--ios-separator); }
 .health-nutrient-details summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 2px 0; color: var(--ios-blue); font-size: 16px; font-weight: 650; cursor: pointer; list-style: none; }
 .health-nutrient-details summary::-webkit-details-marker { display: none; }
@@ -216,10 +216,13 @@
 .health-onboarding-privacy .ios-symbol { width: 15px; height: 15px; }
 .health-onboarding-back { align-self: flex-start; margin: 0 0 22px -10px; }
 
-@media (max-width: 540px) {
+@media (max-width: 759px), (max-height: 599px) {
   .ios-tab-panel > .ios-navigation-bar .ios-navigation-bar__trailing { transform: translateY(54px); }
   .ios-tab-panel > .ios-navigation-bar.is-scrolled .ios-navigation-bar__trailing { transform: translateY(0); }
   .ios-tab-panel:has(.ios-navigation-bar__trailing > *) .health-page-heading { min-height: 78px; padding-right: 66px; }
+}
+
+@media (max-width: 540px) {
   .health-energy-card { grid-template-columns: 1fr; text-align: center; }
   .health-energy-copy p { margin-inline: auto; }
   .health-action-card { min-height: 92px; padding: 11px; }
