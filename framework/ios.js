@@ -142,6 +142,10 @@ export class IOSApp {
     await Promise.allSettled(animations);
     target.getAnimations().forEach(a => a.cancel());
     previous?.getAnimations().forEach(a => a.cancel());
+    if (previous) {
+      previous.style.transform = 'translate3d(-10%,0,0)';
+      previous.style.opacity = '.96';
+    }
     previous?.classList.add('is-behind');
     target.focus({ preventScroll: true });
   }
@@ -159,7 +163,7 @@ export class IOSApp {
         { transform: 'translate3d(100%,0,0)' }
       ], { duration, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'both' }).finished);
       if (previous) animations.push(previous.animate([
-        { transform: 'translate3d(-10%,0,0)', opacity: .96 },
+        { transform: previous.style.transform || 'translate3d(-10%,0,0)', opacity: previous.style.opacity || .96 },
         { transform: 'translate3d(0,0,0)', opacity: 1 }
       ], { duration, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'both' }).finished);
     }
@@ -167,6 +171,12 @@ export class IOSApp {
     screen.getAnimations().forEach(a => a.cancel());
     previous?.getAnimations().forEach(a => a.cancel());
     screen.style.transform = '';
+    screen.style.transition = '';
+    if (previous) {
+      previous.style.transform = '';
+      previous.style.opacity = '';
+      previous.style.transition = '';
+    }
     screen.hidden = true;
     screen.classList.remove('is-active');
     previous?.focus({ preventScroll: true });
@@ -178,8 +188,14 @@ export class IOSApp {
       screen.hidden = true;
       screen.classList.remove('is-active');
       screen.style.transform = '';
+      screen.style.transition = '';
       previous?.classList.remove('is-behind');
       previous?.getAnimations().forEach(a => a.cancel());
+      if (previous) {
+        previous.style.transform = '';
+        previous.style.opacity = '';
+        previous.style.transition = '';
+      }
     });
     this.stack = [];
   }
@@ -189,7 +205,8 @@ export class IOSApp {
       if (!this.stack.length || event.clientX > 24 || event.pointerType === 'mouse' || this.openOverlay) return;
       const current = this.currentSurface();
       if (!current) return;
-      this.edgeGesture = { id: event.pointerId, startX: event.clientX, startY: event.clientY, dx: 0, current, active: false };
+      const previous = this.stack[this.stack.length - 1]?.previous || null;
+      this.edgeGesture = { id: event.pointerId, startX: event.clientX, startY: event.clientY, dx: 0, current, previous, active: false };
       current.setPointerCapture?.(event.pointerId);
     });
 
@@ -203,6 +220,12 @@ export class IOSApp {
       state.dx = dx;
       state.current.style.transition = 'none';
       state.current.style.transform = `translate3d(${dx}px,0,0)`;
+      if (state.previous) {
+        const progress = clamp(dx / Math.max(innerWidth, 1), 0, 1);
+        state.previous.style.transition = 'none';
+        state.previous.style.transform = `translate3d(${-10 + progress * 10}%,0,0)`;
+        state.previous.style.opacity = String(.96 + progress * .04);
+      }
     });
 
     const finish = async event => {
@@ -210,16 +233,28 @@ export class IOSApp {
       if (!state || (event.pointerId != null && state.id !== event.pointerId)) return;
       this.edgeGesture = null;
       state.current.style.transition = '';
+      if (state.previous) state.previous.style.transition = '';
       if (state.active && state.dx > Math.min(110, innerWidth * .28)) {
         await this.back();
       } else if (state.active) {
         const from = state.current.style.transform || 'translate3d(0,0,0)';
+        const previousFrom = state.previous?.style.transform || 'translate3d(-10%,0,0)';
+        const previousOpacity = state.previous?.style.opacity || '.96';
         state.current.style.transform = '';
+        if (state.previous) {
+          state.previous.style.transform = 'translate3d(-10%,0,0)';
+          state.previous.style.opacity = '.96';
+        }
         if (!reducedMotion()) {
-          await state.current.animate(
+          const animations = [state.current.animate(
             [{ transform: from }, { transform: 'translate3d(0,0,0)' }],
             { duration: 180, easing: 'cubic-bezier(.22,.72,.18,1)' }
-          ).finished.catch(() => {});
+          ).finished.catch(() => {})];
+          if (state.previous) animations.push(state.previous.animate(
+            [{ transform: previousFrom, opacity: previousOpacity }, { transform: 'translate3d(-10%,0,0)', opacity: .96 }],
+            { duration: 180, easing: 'cubic-bezier(.22,.72,.18,1)' }
+          ).finished.catch(() => {}));
+          await Promise.all(animations);
         }
       } else {
         state.current.style.transform = '';

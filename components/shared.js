@@ -8,9 +8,7 @@ export function backHeader(title, backLabel = 'Back') {
   return `
     <header class="ios-navigation-bar is-scrolled">
       <div class="ios-navigation-bar__row">
-        <div class="ios-navigation-bar__leading"><div class="ios-glass-group">
-          <button class="ios-bar-button" type="button" data-ios-back><span data-ios-symbol="chevronLeft"></span><span>${escapeHTML(backLabel)}</span></button>
-        </div></div>
+        <div class="ios-navigation-bar__leading"><button class="ios-bar-button health-back-button" type="button" data-ios-back><span data-ios-symbol="chevronLeft"></span><span>${escapeHTML(backLabel)}</span></button></div>
         <div class="ios-navigation-bar__title" style="opacity:1;transform:none">${escapeHTML(title)}</div>
         <div class="ios-navigation-bar__trailing"></div>
       </div>

@@ -1,5 +1,5 @@
-import { defineComponent } from '../framework/framework.js';
-import { backHeader } from './shared.js?v=1.2.1';
+import { defineComponent } from '../framework/framework.js?v=1.3.0';
+import { backHeader } from './shared.js?v=1.3.0';
 
 const choices = [
   ['bloodPressure', 'Blood Pressure'],
@@ -12,7 +12,7 @@ export const Tracking = defineComponent({
   render({ store }) {
     return `${backHeader('Health Tracking', 'Settings')}<div class="ios-scroll"><div class="ios-content health-form-content">
       <h1 class="ios-large-title">Health Tracking</h1>
-      <p class="health-form-intro">Choose the readings you want surfaced on Today. Every reading type remains available from Add Health Data.</p>
+      <p class="health-form-intro">Choose the readings you want surfaced in Summary Favourites. Every reading type remains available from Add Health Data.</p>
       <form data-tracking-form><section class="ios-section"><div class="ios-card health-goal-list health-tracking-list">
         ${choices.map(([key, label]) => `<label class="health-goal-row health-goal-row--compact"><input type="checkbox" name="${key}" ${store.state.tracking[key] ? 'checked' : ''}><span>${label}</span><span class="ios-switch"><span class="ios-switch__track"></span></span></label>`).join('')}
       </div></section>

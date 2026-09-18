@@ -1,5 +1,5 @@
-import { defineComponent } from '../framework/framework.js';
-import { backHeader } from './shared.js?v=1.2.1';
+import { defineComponent } from '../framework/framework.js?v=1.3.0';
+import { backHeader } from './shared.js?v=1.3.0';
 
 let tesseractPromise;
 
@@ -73,7 +73,7 @@ export const LabelScan = defineComponent({
 
   render({ state }) {
     return `
-      ${backHeader('Scan Label', 'Today')}
+      ${backHeader('Scan Label', 'Summary')}
       <div class="ios-scroll"><div class="ios-content health-form-content">
         <h1 class="ios-large-title">Scan Label</h1>
         <section class="ios-section">

@@ -1,7 +1,7 @@
-import { defineComponent } from '../framework/framework.js';
+import { defineComponent } from '../framework/framework.js?v=1.3.0';
 import {
   backHeader, field, formDataObject, localDateTimeValue, makeId, numberValue, selectField, textField, toISODate
-} from './shared.js?v=1.2.1';
+} from './shared.js?v=1.3.0';
 
 function readingFields(type) {
   if (type === 'weight') return field('Weight', 'weight', { unit: 'kg', required: true, max: 500, step: '0.1' });
@@ -22,7 +22,7 @@ export const HealthEntry = defineComponent({
 
   render({ state }) {
     if (state.showGuide) return `
-      ${backHeader('Measurement Tips', 'Today')}
+      ${backHeader('Measurement Tips', 'Summary')}
       <div class="ios-scroll"><div class="ios-content health-form-content health-guide-content">
         <div class="health-guide-mark"><span data-ios-symbol="heartPulse"></span></div>
         <h1 class="ios-large-title">Take a More Accurate Measurement</h1>
@@ -36,7 +36,7 @@ export const HealthEntry = defineComponent({
         <section class="ios-section health-sticky-action"><button class="ios-button ios-button--prominent ios-button--block" type="button" data-continue-to-reading>Continue</button></section>
       </div></div>`;
     return `
-      ${backHeader('Add Health Data', 'Today')}
+      ${backHeader('Add Health Data', 'Summary')}
       <div class="ios-scroll"><div class="ios-content health-form-content">
         <h1 class="ios-large-title">Add Health Data</h1>
         <form data-health-form>

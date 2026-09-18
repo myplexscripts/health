@@ -1,7 +1,7 @@
-import { defineComponent } from '../framework/framework.js';
+import { defineComponent } from '../framework/framework.js?v=1.3.0';
 import {
   backHeader, field, formDataObject, localDateTimeValue, makeId, numberValue, NUTRIENTS, selectField, textField, toISODate
-} from './shared.js?v=1.2.1';
+} from './shared.js?v=1.3.0';
 
 const primaryKeys = ['calories', 'protein', 'carbs', 'fat', 'fibre', 'sugars', 'sodium'];
 const primaryNutrients = new Set(primaryKeys);
@@ -29,7 +29,7 @@ export const FoodEntry = defineComponent({
   render({ state }) {
     const values = state.initial;
     return `
-      ${backHeader(values.source === 'scan' ? 'Review Nutrition' : 'Add Food', 'Today')}
+      ${backHeader(values.source === 'scan' ? 'Review Nutrition' : 'Add Food', 'Summary')}
       <div class="ios-scroll"><div class="ios-content health-form-content">
         <h1 class="ios-large-title">${values.source === 'scan' ? 'Review Label' : 'Add Food'}</h1>
         ${values.source === 'scan' ? `<div class="ios-inline-message health-inline-message" role="status">

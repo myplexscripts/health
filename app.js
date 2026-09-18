@@ -2,18 +2,18 @@ const root = document.querySelector('[data-glasskit-app]');
 root?.removeAttribute('data-ios-app');
 
 const [framework, components, shared] = await Promise.all([
-  import('./framework/framework.js'),
+  import('./framework/framework.js?v=1.3.0'),
   Promise.all([
-    import('./components/food-entry.js?v=1.2.1'),
-    import('./components/label-scan.js?v=1.2.1'),
-    import('./components/health-entry.js?v=1.2.1'),
-    import('./components/entry-detail.js?v=1.2.1'),
-    import('./components/goals.js?v=1.2.1'),
-    import('./components/onboarding.js?v=1.2.1'),
-    import('./components/profile.js?v=1.2.1'),
-    import('./components/tracking.js?v=1.2.1')
+    import('./components/food-entry.js?v=1.3.0'),
+    import('./components/label-scan.js?v=1.3.0'),
+    import('./components/health-entry.js?v=1.3.0'),
+    import('./components/entry-detail.js?v=1.3.0'),
+    import('./components/goals.js?v=1.3.0'),
+    import('./components/onboarding.js?v=1.3.0'),
+    import('./components/profile.js?v=1.3.0'),
+    import('./components/tracking.js?v=1.3.0')
   ]),
-  import('./components/shared.js?v=1.2.1')
+  import('./components/shared.js?v=1.3.0')
 ]);
 
 const { GlassKitApp, GlassKitStorage } = framework;
@@ -101,14 +101,16 @@ function persist(state) {
 
 function shell() {
   const tab = (name, label, icon, selected = false) => `<button class="ios-tabbar__item" type="button" data-ios-tab="${name}" aria-selected="${selected}"><span data-ios-symbol="${icon}"></span><span>${label}</span></button>`;
-  const header = (title, action = true) => `<header class="ios-navigation-bar"><div class="ios-navigation-bar__row"><div class="ios-navigation-bar__leading"></div><div class="ios-navigation-bar__title">${title}</div><div class="ios-navigation-bar__trailing">${action ? '<div class="ios-glass-group"><button class="ios-bar-button ios-bar-button--icon" type="button" data-add aria-label="Add entry"><span data-ios-symbol="plus"></span></button></div>' : ''}</div></div></header>`;
+  const header = title => `<header class="ios-navigation-bar"><div class="ios-navigation-bar__row"><div class="ios-navigation-bar__leading"></div><div class="ios-navigation-bar__title">${title}</div><div class="ios-navigation-bar__trailing"></div></div></header>`;
   return `
-    <section class="ios-tab-panel" data-ios-tab-panel="today" tabindex="-1">${header('Today')}<div class="ios-scroll" data-ios-tabbar-minimize><div class="ios-content" data-today-content></div></div></section>
+    <section class="ios-tab-panel" data-ios-tab-panel="today" tabindex="-1">${header('Summary')}<div class="ios-scroll" data-ios-tabbar-minimize><div class="ios-content" data-today-content></div></div></section>
     <section class="ios-tab-panel" data-ios-tab-panel="trends" tabindex="-1" hidden>${header('Trends')}<div class="ios-scroll" data-ios-tabbar-minimize><div class="ios-content" data-trends-content></div></div></section>
-    <section class="ios-tab-panel" data-ios-tab-panel="log" tabindex="-1" hidden>${header('Log')}<div class="ios-scroll" data-ios-tabbar-minimize><div class="ios-content" data-log-content></div></div></section>
-    <section class="ios-tab-panel" data-ios-tab-panel="settings" tabindex="-1" hidden>${header('Settings', false)}<div class="ios-scroll" data-ios-tabbar-minimize><div class="ios-content" data-settings-content></div></div></section>
+    <section class="ios-tab-panel" data-ios-tab-panel="log" tabindex="-1" hidden>${header('Browse')}<div class="ios-scroll" data-ios-tabbar-minimize><div class="ios-content" data-log-content></div></div></section>
+    <section class="ios-tab-panel" data-ios-tab-panel="settings" tabindex="-1" hidden>${header('Settings')}<div class="ios-scroll" data-ios-tabbar-minimize><div class="ios-content" data-settings-content></div></div></section>
     <div class="ios-tabbar-wrap"><nav class="ios-tabbar" aria-label="Primary navigation">
-      ${tab('today', 'Today', 'heartPulse', true)}${tab('trends', 'Trends', 'chartNoAxesCombined')}${tab('log', 'Log', 'list')}${tab('settings', 'Settings', 'gear')}
+      ${tab('today', 'Summary', 'heartPulse', true)}${tab('trends', 'Trends', 'chartNoAxesCombined')}
+      <button class="health-add-tab" type="button" data-add aria-label="Add health or nutrition data"><span class="health-add-tab__circle"><span data-ios-symbol="plus"></span></span><span class="health-add-tab__label">Add</span></button>
+      ${tab('log', 'Browse', 'list')}${tab('settings', 'Settings', 'gear')}
     </nav></div>`;
 }
 
@@ -227,7 +229,7 @@ function entryValue(entry) {
 function entryRow(entry) {
   const [icon, colourClass] = entryIcon(entry);
   const subtitle = entry.type === 'food' ? `${entry.serving} • ${new Intl.DateTimeFormat('en-CA', { hour: 'numeric', minute: '2-digit' }).format(new Date(entry.datetime))}` : formatDateTime(entry.datetime);
-  return `<button class="ios-row ios-row--disclosure" type="button" data-entry-row data-entry-category="${entry.type === 'food' ? 'nutrition' : 'health'}" data-entry-search="${escapeHTML(`${entryTitle(entry)} ${subtitle}`.toLowerCase())}" data-glasskit-link="/entry/${encodeURIComponent(entry.id)}"><span class="ios-row__icon ${colourClass}"><span data-ios-symbol="${icon}"></span></span><span class="ios-row__body"><span class="ios-row__title">${escapeHTML(entryTitle(entry))}</span><span class="ios-row__subtitle">${escapeHTML(subtitle)}</span></span><span class="ios-row__value health-row-value">${escapeHTML(entryValue(entry))}</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>`;
+  return `<button class="ios-row ios-row--disclosure" type="button" data-entry-row data-entry-category="${entry.type === 'food' ? 'nutrition' : 'health'}" data-entry-type="${entry.type === 'food' ? 'nutrition' : escapeHTML(entry.readingType)}" data-entry-search="${escapeHTML(`${entryTitle(entry)} ${subtitle}`.toLowerCase())}" data-glasskit-link="/entry/${encodeURIComponent(entry.id)}"><span class="ios-row__icon ${colourClass}"><span data-ios-symbol="${icon}"></span></span><span class="ios-row__body"><span class="ios-row__title">${escapeHTML(entryTitle(entry))}</span><span class="ios-row__subtitle">${escapeHTML(subtitle)}</span></span><span class="ios-row__value health-row-value">${escapeHTML(entryValue(entry))}</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>`;
 }
 
 function describeToday(totals, goals, config) {
@@ -245,24 +247,35 @@ function latestHealthEntry(readingType, todaysEntries = []) {
     || app.store.state.entries.find(entry => entry.readingType === readingType);
 }
 
-function vitalCard(readingType, entry) {
+function vitalRow(readingType, entry) {
   const settings = {
-    'blood-pressure': { label: 'Blood Pressure', icon: 'heartPulse', className: 'health-vital-card--pressure', empty: 'Add your first blood pressure reading.' },
-    'heart-rate': { label: 'Heart Rate', icon: 'activity', className: 'health-vital-card--heart-rate', empty: 'Add your first heart rate reading.' },
-    weight: { label: 'Weight', icon: 'scale', className: 'health-vital-card--weight', empty: 'Add your first weight reading.' },
-    glucose: { label: 'Blood Glucose', icon: 'droplets', className: 'health-vital-card--glucose', empty: 'Add your first blood glucose reading.' }
+    'blood-pressure': { label: 'Blood Pressure', icon: 'heartPulse', className: 'health-favourite-icon--pressure', empty: 'No readings yet' },
+    'heart-rate': { label: 'Heart Rate', icon: 'activity', className: 'health-favourite-icon--heart-rate', empty: 'No readings yet' },
+    weight: { label: 'Weight', icon: 'scale', className: 'health-favourite-icon--weight', empty: 'No readings yet' },
+    glucose: { label: 'Blood Glucose', icon: 'droplets', className: 'health-favourite-icon--glucose', empty: 'No readings yet' }
   }[readingType];
   const route = `/health/new?type=${readingType}`;
-  if (!entry) return `<article class="ios-card health-vital-card ${settings.className}"><div class="health-vital-card__icon"><span data-ios-symbol="${settings.icon}"></span></div><div><span>${settings.label}</span><strong class="health-vital-card__empty">No readings</strong><p>${settings.empty}</p></div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="${route}">Add</button></article>`;
+  if (!entry) return `<button class="ios-row ios-row--disclosure health-favourite-row" type="button" data-glasskit-link="${route}"><span class="ios-row__icon ${settings.className}"><span data-ios-symbol="${settings.icon}"></span></span><span class="ios-row__body"><span class="ios-row__title">${settings.label}</span><span class="ios-row__subtitle">${settings.empty}</span></span><span class="health-favourite-add">Add</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>`;
   const display = readingType === 'blood-pressure'
-    ? `${entry.systolic}<small>/</small>${entry.diastolic}`
+    ? `${entry.systolic}/${entry.diastolic}`
     : readingType === 'heart-rate'
-      ? `${round(entry.heartRate)}<small>bpm</small>`
+      ? `${round(entry.heartRate)} bpm`
       : readingType === 'weight'
-        ? `${round(entry.weight, 1)}<small>kg</small>`
-        : `${round(entry.glucose, 1)}<small>mmol/L</small>`;
-  const unit = readingType === 'blood-pressure' ? 'mmHg · ' : '';
-  return `<article class="ios-card health-vital-card ${settings.className}"><div class="health-vital-card__icon"><span data-ios-symbol="${settings.icon}"></span></div><div><span>${settings.label}</span><strong>${display}</strong><p>${unit}${formatDay(entry.datetime, { short: true })}</p></div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/entry/${encodeURIComponent(entry.id)}">View</button></article>`;
+        ? `${round(entry.weight, 1)} kg`
+        : `${round(entry.glucose, 1)} mmol/L`;
+  const context = readingType === 'blood-pressure' ? `mmHg · ${formatDay(entry.datetime, { short: true })}` : formatDay(entry.datetime, { short: true });
+  return `<button class="ios-row ios-row--disclosure health-favourite-row" type="button" data-glasskit-link="/entry/${encodeURIComponent(entry.id)}"><span class="ios-row__icon ${settings.className}"><span data-ios-symbol="${settings.icon}"></span></span><span class="ios-row__body"><span class="ios-row__title">${settings.label}</span><span class="ios-row__subtitle">${context}</span></span><span class="ios-row__value health-favourite-value">${display}</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>`;
+}
+
+function nutritionFavouriteRow(nutrient, value, goal, setting) {
+  const ratio = percent(value, goal);
+  const over = setting.mode === 'maximum' && value > goal;
+  const subtitle = setting.mode === 'track'
+    ? 'Logged today'
+    : setting.mode === 'maximum'
+      ? (over ? `${round(value - goal)} ${nutrient.unit} over your limit` : `${round(Math.max(0, goal - value))} ${nutrient.unit} remaining`)
+      : `${ratio}% of your daily goal`;
+  return `<button class="ios-row ios-row--disclosure health-favourite-row" type="button" data-glasskit-link="/trends"><span class="ios-row__icon health-favourite-icon--nutrition" style="--health-favourite-colour:${nutrient.colour}"><span data-ios-symbol="${nutrient.icon}"></span></span><span class="ios-row__body"><span class="ios-row__title">${escapeHTML(nutrient.label)}</span><span class="ios-row__subtitle${over ? ' health-text-danger' : ''}">${escapeHTML(subtitle)}</span></span><span class="ios-row__value health-favourite-value">${round(value)} ${escapeHTML(nutrient.unit)}</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>`;
 }
 
 function renderToday() {
@@ -278,29 +291,28 @@ function renderToday() {
   const energyPct = percent(totals.calories, goals.calories);
   const remaining = Math.max(0, goals.calories - totals.calories);
   const name = app.store.state.profile?.name || 'there';
+  const initial = name === 'there' ? '' : name.trim().charAt(0).toUpperCase();
   const trackedReadings = [
     ['bloodPressure', 'blood-pressure'], ['heartRate', 'heart-rate'], ['weight', 'weight'], ['glucose', 'glucose']
   ].filter(([key]) => app.store.state.tracking[key]).map(([, type]) => [type, latestHealthEntry(type, health)]);
+  const favourites = [
+    ...activeNutrients.map(nutrient => nutritionFavouriteRow(nutrient, totals[nutrient.key], goals[nutrient.key], goalConfig[nutrient.key])),
+    ...trackedReadings.map(([type, entry]) => vitalRow(type, entry))
+  ];
+  const recentEntries = app.store.state.entries.slice(0, 4);
   target.innerHTML = `
-    <div class="health-page-heading"><div><p class="health-eyebrow">${formatDay(new Date())}</p><h1 class="ios-large-title">Hi, ${escapeHTML(name)}</h1></div></div>
-    <section class="ios-section health-log-launcher" aria-labelledby="quick-log-title"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title" id="quick-log-title">Log something</h2></div></div><div class="health-action-grid">
-      <button class="health-action-card" type="button" data-glasskit-link="/scan"><span class="health-action-card__icon" style="background:var(--ios-blue)"><span data-ios-symbol="scanLine"></span></span><span><strong>Scan</strong><small>Nutrition label</small></span></button>
-      <button class="health-action-card" type="button" data-glasskit-link="/food/new"><span class="health-action-card__icon" style="background:var(--ios-orange)"><span data-ios-symbol="utensils"></span></span><span><strong>Food</strong><small>Enter manually</small></span></button>
-      <button class="health-action-card" type="button" data-glasskit-link="/health/new"><span class="health-action-card__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span><strong>Health</strong><small>BP, heart rate, more</small></span></button>
-    </div></section>
+    <div class="health-page-heading health-summary-heading"><div><p class="health-eyebrow">${formatDay(new Date())}</p><h1 class="ios-large-title">Summary</h1><p class="health-summary-greeting">Good to see you, ${escapeHTML(name)}.</p></div><button class="health-profile-button" type="button" data-glasskit-link="/profile" aria-label="Open profile">${initial ? escapeHTML(initial) : '<span data-ios-symbol="person"></span>'}</button></div>
     ${sampleBanner()}
-    ${goalConfig.calories?.enabled ? `<section class="ios-section"><article class="ios-card health-energy-card">
-      <div class="health-energy-ring" style="--health-progress:${clamp(energyPct) * 3.6}deg" role="img" aria-label="${energyPct}% of energy goal"><div><strong>${Math.round(totals.calories).toLocaleString('en-CA')}</strong><span>of ${goals.calories.toLocaleString('en-CA')} kcal</span></div></div>
+    ${goalConfig.calories?.enabled ? `<section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Today</h2><div class="ios-section-heading__subtitle">Your nutrition at a glance</div></div></div><article class="ios-card health-energy-card">
+      <div class="health-energy-ring" style="--health-progress:${clamp(energyPct) * 3.6}deg" role="img" aria-label="${energyPct}% of energy goal"><div><strong>${Math.round(totals.calories).toLocaleString('en-CA')}</strong><span>of ${goals.calories.toLocaleString('en-CA')}</span></div></div>
       <div class="health-energy-copy"><span class="health-status-pill"><span></span>${energyPct > 100 ? 'Over goal' : 'On track'}</span><h2>${remaining.toLocaleString('en-CA')} kcal left</h2><p>${escapeHTML(describeToday(totals, goals, goalConfig))}</p></div>
     </article></section>` : ''}
-    ${activeNutrients.length ? `<section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Nutrition</h2><div class="ios-section-heading__subtitle">Your chosen goals and limits</div></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/trends">See Trends</button></div>
-      <article class="ios-card health-nutrition-card">
-        ${activeNutrients.map(nutrient => nutritionProgress(nutrient, totals[nutrient.key], goals[nutrient.key], goalConfig[nutrient.key])).join('')}
-      </article>
-    </section>` : ''}
-    ${trackedReadings.length ? `<section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Health</h2><div class="ios-section-heading__subtitle">Your most recent readings</div></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/tracking">Edit</button></div><div class="health-vital-grid">${trackedReadings.map(([type, entry]) => vitalCard(type, entry)).join('')}</div></section>` : ''}
-    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Today's Log</h2><div class="ios-section-heading__subtitle">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</div></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/log">View All</button></div>
-      ${entries.length ? `<div class="ios-list">${entries.slice(0, 5).map(entryRow).join('')}</div>` : `<div class="ios-content-unavailable health-empty"><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="clipboardList"></span></div><div class="ios-content-unavailable__title">Nothing Logged Yet</div><div class="ios-content-unavailable__description">Add food or a health reading to begin.</div></div></div>`}
+    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Favourites</h2><div class="ios-section-heading__subtitle">Goals and readings you chose to follow</div></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/tracking">Edit</button></div>
+      ${favourites.length ? `<div class="ios-list health-favourites-list">${favourites.join('')}</div>` : `<div class="health-compact-empty"><span data-ios-symbol="star"></span><div><strong>Choose what matters</strong><p>Select nutrition goals and health readings in Settings.</p></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/settings">Open Settings</button></div>`}
+    </section>
+    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Highlights</h2><div class="ios-section-heading__subtitle">Useful context from your own log</div></div></div><button class="ios-card health-highlight-card" type="button" data-glasskit-link="/trends"><span class="health-highlight-card__icon"><span data-ios-symbol="sparkles"></span></span><span><strong>${totals.calories ? 'Your day in context' : 'Start building your picture'}</strong><small>${escapeHTML(describeToday(totals, goals, goalConfig))}</small></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></section>
+    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Recent</h2><div class="ios-section-heading__subtitle">Your latest nutrition and health data</div></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/log">Show All</button></div>
+      ${recentEntries.length ? `<div class="ios-list">${recentEntries.map(entryRow).join('')}</div>` : `<div class="health-compact-empty"><span data-ios-symbol="clipboardList"></span><div><strong>No data yet</strong><p>Use Add below to log food or a reading.</p></div></div>`}
     </section>`;
   app.enhance(target);
 }
@@ -367,6 +379,19 @@ function trendInsights(days, totalsByDay, goals) {
   return insights;
 }
 
+function heartTrendPanel(type, readings, averagePrimary, averageSecondary = null) {
+  const pressure = type === 'blood-pressure';
+  const label = pressure ? 'Blood Pressure' : 'Heart Rate';
+  const icon = pressure ? 'heartPulse' : 'activity';
+  const route = `/health/new?type=${type}`;
+  if (readings.length < 2) {
+    const progress = readings.length === 1 ? '1 of 2 readings logged' : 'Two readings are needed to show a trend';
+    return `<div class="health-heart-empty-row"><span class="health-heart-empty-row__icon ${pressure ? '' : 'is-pink'}"><span data-ios-symbol="${icon}"></span></span><span><strong>${label}</strong><small>${progress}</small></span><button class="ios-button ios-button--plain" type="button" data-glasskit-link="${route}">Add Reading</button></div>`;
+  }
+  const metric = pressure ? `${averagePrimary}<small>/ ${averageSecondary}</small>` : `${averagePrimary}<small>bpm</small>`;
+  return `<article class="health-heart-panel ${pressure ? 'health-bp-chart' : 'health-heart-rate-chart'}" style="--ios-chart-accent:${pressure ? 'var(--ios-red)' : 'var(--ios-pink)'};${pressure ? '--ios-chart-accent-2:var(--ios-blue);' : ''}"><div class="health-heart-panel__header"><span class="health-heart-empty-row__icon ${pressure ? '' : 'is-pink'}"><span data-ios-symbol="${icon}"></span></span><span class="health-heart-panel__copy"><strong>${label}</strong><small>${readings.length} readings in this period</small></span><span class="health-heart-panel__metric">${metric}</span><button class="ios-button ios-button--plain" type="button" data-glasskit-link="${route}" aria-label="Add ${label.toLowerCase()} reading"><span data-ios-symbol="plus"></span></button></div>${pressure ? bpChart(readings) : heartRateChart(readings)}${pressure ? '<div class="ios-chart-legend"><span class="ios-chart-legend__item"><span class="ios-chart-legend__dot"></span>Systolic</span><span class="ios-chart-legend__item"><span class="ios-chart-legend__dot ios-chart-legend__dot--secondary"></span>Diastolic</span></div>' : ''}</article>`;
+}
+
 function renderTrends() {
   const target = root.querySelector('[data-trends-content]');
   const range = app.store.state.trendDays;
@@ -388,23 +413,17 @@ function renderTrends() {
   const avgDiastolic = Math.round(average(bpReadings.map(entry => entry.diastolic)));
   const heartRateReadings = app.store.state.entries.filter(entry => entry.readingType === 'heart-rate' && validKeys.has(dateKey(entry.datetime))).sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
   const avgHeartRate = Math.round(average(heartRateReadings.map(entry => entry.heartRate)));
-  const insightsSection = app.store.state.preferences.descriptiveInsights ? `<section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">What Stands Out</h2><div class="ios-section-heading__subtitle">Descriptive changes in your own log</div></div></div><div class="health-insight-list">${trendInsights(days, grouped, app.store.state.goals).map(insight => `<article class="ios-insight-card health-insight-card" style="--ios-insight-accent:${insight.colour}"><span class="health-insight-card__icon"><span data-ios-symbol="${insight.icon}"></span></span><div><h3>${insight.title}</h3><p>${insight.text}</p></div></article>`).join('')}</div></section>` : '';
+  const insightsSection = app.store.state.preferences.descriptiveInsights ? `<section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Highlights</h2><div class="ios-section-heading__subtitle">Descriptive changes in your own log</div></div></div><div class="ios-card health-insight-list">${trendInsights(days, grouped, app.store.state.goals).map(insight => `<article class="health-insight-card" style="--ios-insight-accent:${insight.colour}"><span class="health-insight-card__icon"><span data-ios-symbol="${insight.icon}"></span></span><div><h3>${insight.title}</h3><p>${insight.text}</p></div></article>`).join('')}</div></section>` : '';
   target.innerHTML = `
-    <div class="health-page-heading"><div><p class="health-eyebrow">Patterns, not perfection</p><h1 class="ios-large-title">Trends</h1></div></div>
+    <div class="health-page-heading"><div><p class="health-eyebrow">Patterns, not perfection</p><h1 class="ios-large-title">Trends</h1><p class="health-summary-greeting">See how your nutrition and heart data change over time.</p></div></div>
     ${sampleBanner()}
     <section class="ios-section"><div class="ios-segmented health-trend-range" data-ios-segmented aria-label="Trend range"><button type="button" data-trend-days="7" aria-selected="${range === 7}">Week</button><button type="button" data-trend-days="30" aria-selected="${range === 30}">Month</button><button type="button" data-trend-days="180" aria-selected="${range === 180}">6 Months</button></div></section>
+    ${insightsSection}
     <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Nutrition</h2><div class="ios-section-heading__subtitle">Averages for days with food logged</div></div></div>
       <div class="health-stat-grid"><article><span>Energy</span><strong>${calorieAverage.toLocaleString('en-CA')}</strong><small>kcal per day</small></article><article><span>Protein</span><strong>${proteinAverage}</strong><small>g per day</small></article><article><span>Fibre</span><strong>${fibreAverage}</strong><small>g per day</small></article></div>
       <article class="ios-chart-card health-chart-card"><div class="ios-chart-card__header"><div class="ios-chart-card__copy"><h3 class="ios-chart-card__title">Energy Logged</h3><div class="ios-chart-card__subtitle">Daily total compared over time</div></div><div class="ios-chart-card__metric">${calorieAverage.toLocaleString('en-CA')}<small>avg</small></div></div>${calorieChart(days, grouped, app.store.state.goals.calories)}</article>
     </section>
-    ${insightsSection}
-    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Blood Pressure</h2><div class="ios-section-heading__subtitle">Systolic and diastolic readings</div></div></div>
-      ${bpReadings.length >= 2 ? `<article class="ios-chart-card health-chart-card health-bp-chart" style="--ios-chart-accent:var(--ios-red);--ios-chart-accent-2:var(--ios-blue)"><div class="ios-chart-card__header"><div class="ios-chart-card__copy"><h3 class="ios-chart-card__title">Recent Average</h3><div class="ios-chart-card__subtitle">${bpReadings.length} readings in this period</div></div><div class="ios-chart-card__metric">${avgSystolic}<small>/ ${avgDiastolic}</small></div></div>${bpChart(bpReadings)}<div class="ios-chart-legend"><span class="ios-chart-legend__item"><span class="ios-chart-legend__dot"></span>Systolic</span><span class="ios-chart-legend__item"><span class="ios-chart-legend__dot ios-chart-legend__dot--secondary"></span>Diastolic</span></div></article>` : `<div class="ios-content-unavailable health-empty"><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="heartPulse"></span></div><div class="ios-content-unavailable__title">Add More Readings</div><div class="ios-content-unavailable__description">Two blood pressure readings are needed to draw a trend.</div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/health/new?type=blood-pressure">Add Reading</button></div></div>`}
-    </section>
-    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Heart Rate</h2><div class="ios-section-heading__subtitle">Your recorded beats per minute</div></div></div>
-      ${heartRateReadings.length >= 2 ? `<article class="ios-chart-card health-chart-card health-heart-rate-chart" style="--ios-chart-accent:var(--ios-pink)"><div class="ios-chart-card__header"><div class="ios-chart-card__copy"><h3 class="ios-chart-card__title">Recent Average</h3><div class="ios-chart-card__subtitle">${heartRateReadings.length} readings in this period</div></div><div class="ios-chart-card__metric">${avgHeartRate}<small>bpm</small></div></div>${heartRateChart(heartRateReadings)}</article>` : `<div class="ios-content-unavailable health-empty"><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="activity"></span></div><div class="ios-content-unavailable__title">Add More Readings</div><div class="ios-content-unavailable__description">Two heart rate readings are needed to draw a trend.</div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/health/new?type=heart-rate">Add Reading</button></div></div>`}
-      <div class="ios-section__footer">Trends are informational and are not a diagnosis. Discuss concerns or unusual readings with a qualified health professional.</div>
-    </section>`;
+    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Heart</h2><div class="ios-section-heading__subtitle">Blood pressure and heart rate together</div></div></div><div class="ios-card health-heart-card">${heartTrendPanel('blood-pressure', bpReadings, avgSystolic, avgDiastolic)}${heartTrendPanel('heart-rate', heartRateReadings, avgHeartRate)}</div><div class="ios-section__footer">Trends are informational and are not a diagnosis. Discuss concerns or unusual readings with a qualified health professional.</div></section>`;
   app.enhance(target);
 }
 
@@ -413,29 +432,56 @@ function renderLog() {
   const filter = app.store.state.historyFilter;
   const groups = new Map();
   app.store.state.entries.forEach(entry => { const key = dateKey(entry.datetime); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(entry); });
+  const counts = {
+    all: app.store.state.entries.length,
+    nutrition: app.store.state.entries.filter(entry => entry.type === 'food').length,
+    heart: app.store.state.entries.filter(entry => ['blood-pressure', 'heart-rate'].includes(entry.readingType)).length,
+    body: app.store.state.entries.filter(entry => entry.readingType === 'weight').length,
+    glucose: app.store.state.entries.filter(entry => entry.readingType === 'glucose').length
+  };
+  const filters = {
+    all: ['All Health Data', 'Every nutrition and health entry'],
+    nutrition: ['Nutrition', 'Meals, snacks, and nutrient data'],
+    heart: ['Heart', 'Blood pressure and heart rate'],
+    body: ['Body Measurements', 'Weight readings'],
+    glucose: ['Blood Glucose', 'Glucose readings']
+  };
+  const categoryRow = (key, label, subtitle, icon, colour) => `<button class="ios-row ios-row--disclosure health-category-row${filter === key ? ' is-selected' : ''}" type="button" data-history-filter="${key}"><span class="ios-row__icon" style="background:${colour}"><span data-ios-symbol="${icon}"></span></span><span class="ios-row__body"><span class="ios-row__title">${label}</span><span class="ios-row__subtitle">${subtitle}</span></span><span class="ios-row__value">${counts[key]}</span><span class="ios-row__chevron"><span data-ios-symbol="${filter === key ? 'check' : 'chevronRight'}"></span></span></button>`;
   target.innerHTML = `
-    <div class="health-page-heading"><div><p class="health-eyebrow">Everything in one place</p><h1 class="ios-large-title">Log</h1></div></div>
+    <div class="health-page-heading"><div><p class="health-eyebrow">Everything in one place</p><h1 class="ios-large-title">Browse</h1><p class="health-summary-greeting">Find a category or review your complete record.</p></div></div>
     ${sampleBanner()}
-    <section class="ios-section"><label class="ios-search-field"><span data-ios-symbol="search"></span><input type="search" placeholder="Search entries" autocomplete="off" aria-label="Search entries" data-log-search><button class="ios-search-field__clear" type="button" data-ios-clear aria-label="Clear search"><span data-ios-symbol="xmark"></span></button></label></section>
-    <section class="ios-section"><div class="ios-segmented health-log-filter" data-ios-segmented aria-label="Log filter"><button type="button" data-history-filter="all" aria-selected="${filter === 'all'}">All</button><button type="button" data-history-filter="nutrition" aria-selected="${filter === 'nutrition'}">Nutrition</button><button type="button" data-history-filter="health" aria-selected="${filter === 'health'}">Health</button></div></section>
+    <section class="ios-section"><label class="ios-search-field"><span data-ios-symbol="search"></span><input type="search" placeholder="Search health data" autocomplete="off" aria-label="Search health data" data-log-search><button class="ios-search-field__clear" type="button" data-ios-clear aria-label="Clear search"><span data-ios-symbol="xmark"></span></button></label></section>
+    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Health Categories</h2><div class="ios-section-heading__subtitle">Browse related data together</div></div></div><div class="ios-list health-category-list">
+      ${categoryRow('nutrition', 'Nutrition', 'Meals and 39 nutrient fields', 'utensils', 'var(--ios-orange)')}
+      ${categoryRow('heart', 'Heart', 'Blood pressure and heart rate', 'heartPulse', 'var(--ios-red)')}
+      ${categoryRow('body', 'Body Measurements', 'Weight over time', 'scale', 'var(--ios-indigo)')}
+      ${categoryRow('glucose', 'Blood Glucose', 'Fasting and meal context', 'droplets', 'var(--ios-blue)')}
+    </div></section>
+    <section class="ios-section health-records-heading"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">${filters[filter]?.[0] || filters.all[0]}</h2><div class="ios-section-heading__subtitle">${filters[filter]?.[1] || filters.all[1]}</div></div>${filter !== 'all' ? '<button class="ios-button ios-button--plain" type="button" data-history-filter="all">Show All</button>' : ''}</div></section>
     <div data-log-groups>${[...groups.entries()].map(([key, entries]) => `<section class="ios-section health-log-group" data-log-group><div class="ios-section__header">${key === dateKey(new Date()) ? 'Today' : formatDay(`${key}T12:00:00`)}</div><div class="ios-list">${entries.map(entryRow).join('')}</div></section>`).join('')}</div>
-    <div class="ios-content-unavailable health-empty" data-log-empty ${app.store.state.entries.length ? 'hidden' : ''}><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="clipboardList"></span></div><div class="ios-content-unavailable__title">No Entries</div><div class="ios-content-unavailable__description">Food and health data will appear here.</div><button class="ios-button ios-button--tinted" type="button" data-add>Add Entry</button></div></div>`;
+    <div class="ios-content-unavailable health-empty" data-log-empty ${app.store.state.entries.length ? 'hidden' : ''}><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="clipboardList"></span></div><div class="ios-content-unavailable__title">No Matching Data</div><div class="ios-content-unavailable__description">Try another category or use Add to log something new.</div><button class="ios-button ios-button--tinted" type="button" data-add>Add Data</button></div></div>`;
   app.enhance(target);
   filterLogRows();
 }
 
 function filterLogRows() {
-  const query = root.querySelector('[data-log-search]')?.value.trim().toLowerCase() || '';
+  const scope = root.querySelector('[data-log-content]');
+  if (!scope) return;
+  const query = scope.querySelector('[data-log-search]')?.value.trim().toLowerCase() || '';
   const filter = app.store.state.historyFilter;
   let visible = 0;
-  root.querySelectorAll('[data-entry-row]').forEach(row => {
-    const matchesFilter = filter === 'all' || row.dataset.entryCategory === filter;
+  scope.querySelectorAll('[data-entry-row]').forEach(row => {
+    const matchesFilter = filter === 'all'
+      || (filter === 'nutrition' && row.dataset.entryCategory === 'nutrition')
+      || (filter === 'heart' && ['blood-pressure', 'heart-rate'].includes(row.dataset.entryType))
+      || (filter === 'body' && row.dataset.entryType === 'weight')
+      || (filter === 'glucose' && row.dataset.entryType === 'glucose');
     const matchesQuery = !query || row.dataset.entrySearch.includes(query);
     row.hidden = !(matchesFilter && matchesQuery);
     if (!row.hidden) visible += 1;
   });
-  root.querySelectorAll('[data-log-group]').forEach(group => { group.hidden = !group.querySelector('[data-entry-row]:not([hidden])'); });
-  const empty = root.querySelector('[data-log-empty]');
+  scope.querySelectorAll('[data-log-group]').forEach(group => { group.hidden = !group.querySelector('[data-entry-row]:not([hidden])'); });
+  const empty = scope.querySelector('[data-log-empty]');
   if (empty) empty.hidden = visible > 0;
 }
 
@@ -449,12 +495,12 @@ function renderSettings() {
     <section class="ios-section"><div class="ios-section__header">Profile and Goals</div><div class="ios-list">
       <button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/profile"><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="person"></span></span><span class="ios-row__body"><span class="ios-row__title">Name</span><span class="ios-row__subtitle">How Health greets you</span></span><span class="ios-row__value">${escapeHTML(profileName)}</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>
       <button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/goals"><span class="ios-row__icon" style="background:var(--ios-green)"><span data-ios-symbol="target"></span></span><span class="ios-row__body"><span class="ios-row__title">Nutrition Goals</span><span class="ios-row__subtitle">Goals and daily limits</span></span><span class="ios-row__value">${activeGoals} active</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>
-      <button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/tracking"><span class="ios-row__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span class="ios-row__body"><span class="ios-row__title">Health Tracking</span><span class="ios-row__subtitle">Readings shown on Today</span></span><span class="ios-row__value">${activeTracking} active</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>
+      <button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/tracking"><span class="ios-row__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span class="ios-row__body"><span class="ios-row__title">Health Tracking</span><span class="ios-row__subtitle">Readings shown in Favourites</span></span><span class="ios-row__value">${activeTracking} active</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>
     </div></section>
     <section class="ios-section"><div class="ios-section__header">Understanding Your Data</div><div class="ios-list"><label class="ios-row"><span class="ios-row__icon" style="background:var(--ios-indigo)"><span data-ios-symbol="sparkles"></span></span><span class="ios-row__body"><span class="ios-row__title">Trend Insights</span><span class="ios-row__subtitle">Describe changes in your own log</span></span><span class="ios-switch"><input type="checkbox" data-insights-toggle ${app.store.state.preferences.descriptiveInsights ? 'checked' : ''} aria-label="Trend insights"><span class="ios-switch__track"></span></span></label></div><div class="ios-section__footer">Insights describe your entries and never diagnose a health condition.</div></section>
     <section class="ios-section"><div class="ios-section__header">Your Data</div><div class="ios-list"><button class="ios-row ios-row--disclosure" type="button" data-export-data><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="download"></span></span><span class="ios-row__body"><span class="ios-row__title">Export Data</span><span class="ios-row__subtitle">Download a JSON backup</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>${app.store.state.usingSampleData ? `<button class="ios-row ios-row--disclosure" type="button" data-clear-sample><span class="ios-row__icon" style="background:var(--ios-orange)"><span data-ios-symbol="refresh"></span></span><span class="ios-row__body"><span class="ios-row__title">Clear Sample Data</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>` : ''}<button class="ios-row ios-row--disclosure health-destructive-row" type="button" data-erase-data><span class="ios-row__icon"><span data-ios-symbol="trash"></span></span><span class="ios-row__body"><span class="ios-row__title">Erase All Data</span><span class="ios-row__subtitle">This cannot be undone</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></div></section>
     <section class="ios-section"><article class="ios-card health-privacy-card"><span class="health-privacy-card__icon"><span data-ios-symbol="lock"></span></span><div><h2>Your data stays on this device</h2><p>Health stores entries in this browser. Nothing is uploaded unless you choose to export it.</p></div></article></section>
-    <section class="ios-section"><div class="ios-section__header">About</div><div class="ios-list"><div class="ios-row"><span class="ios-row__body"><span class="ios-row__title">Health</span></span><span class="ios-row__value">Version 1.2</span></div></div></section>`;
+    <section class="ios-section"><div class="ios-section__header">About</div><div class="ios-list"><div class="ios-row"><span class="ios-row__body"><span class="ios-row__title">Health</span></span><span class="ios-row__value">Version 1.3</span></div></div></section>`;
   app.enhance(target);
 }
 

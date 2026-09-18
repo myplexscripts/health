@@ -1,5 +1,5 @@
-import { defineComponent } from '../framework/framework.js';
-import { escapeHTML, goalRows, goalsFromForm } from './shared.js?v=1.2.1';
+import { defineComponent } from '../framework/framework.js?v=1.3.0';
+import { escapeHTML, goalRows, goalsFromForm } from './shared.js?v=1.3.0';
 
 export const Onboarding = defineComponent({
   state: ({ store }) => ({ step: 1, name: store.state.profile?.name || '' }),

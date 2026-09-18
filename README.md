@@ -23,4 +23,4 @@ python -m http.server 4173
 
 Then open `http://localhost:4173`.
 
-All product code lives in `app.js`, `app.css`, and `components/`. The `framework/` directory is an unchanged copy of the GlassKit starter framework.
+All product code lives in `app.js`, `app.css`, and `components/`. The `framework/` directory comes from the GlassKit starter and includes two reusable fixes made here: preserving query parameters in string routes and keeping interactive back transitions visually continuous.

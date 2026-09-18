@@ -1,4 +1,4 @@
-import { mountComponent } from './component.js';
+import { mountComponent } from './component.js?v=1.3.0';
 
 function normalisePath(input = '/') {
   let path = String(input || '/').trim();
@@ -16,14 +16,19 @@ function splitPath(path) {
 }
 
 function appendQuery(path, query = {}) {
-  const params = new URLSearchParams();
+  const normalised = normalisePath(path);
+  const [pathname, existingSearch = ''] = normalised.split('?');
+  const params = new URLSearchParams(existingSearch);
   Object.entries(query || {}).forEach(([key, value]) => {
     if (value == null || value === '') return;
-    if (Array.isArray(value)) value.forEach(item => params.append(key, String(item)));
+    if (Array.isArray(value)) {
+      params.delete(key);
+      value.forEach(item => params.append(key, String(item)));
+    }
     else params.set(key, String(value));
   });
   const search = params.toString();
-  return search ? `${normalisePath(path).split('?')[0]}?${search}` : normalisePath(path).split('?')[0];
+  return search ? `${pathname}?${search}` : pathname;
 }
 
 function compileRoute(path) {
@@ -305,7 +310,7 @@ export class GlassKitRouter {
     return `glasskit-${base.replace(/[^A-Za-z0-9_-]+/g, '-')}-${hashPath(context.path)}`;
   }
 
-  async ensureTarget(context) {
+  async ensureTarget(context, { updateCached = true } = {}) {
     const route = context.route;
     if (!route.component && !route.loadComponent) {
       context.screenName = route.screen || null;
@@ -318,7 +323,7 @@ export class GlassKitRouter {
       context.target = cached.host;
       context.screenName = cached.screenName;
       context.componentInstance = cached.instance;
-      await cached.instance.update(this.componentContext(context));
+      if (updateCached) await cached.instance.update(this.componentContext(context));
       cached.usedAt = Date.now();
       return cached.host;
     }
@@ -391,7 +396,7 @@ export class GlassKitRouter {
     if (matched.route.beforeEnter && await matched.route.beforeEnter(next, previous) === false) return false;
 
     await this.resolveData(next);
-    await this.ensureTarget(next);
+    await this.ensureTarget(next, { updateCached: direction !== 'back' });
 
     const previousTarget = this.targetFor(previous);
     const nextTarget = this.targetFor(next);

@@ -1,5 +1,5 @@
-import { defineComponent } from '../framework/framework.js';
-import { backHeader, escapeHTML, formatDateTime, NUTRIENTS } from './shared.js?v=1.2.1';
+import { defineComponent } from '../framework/framework.js?v=1.3.0';
+import { backHeader, escapeHTML, formatDateTime, NUTRIENTS } from './shared.js?v=1.3.0';
 
 function metric(label, value, unit = '') {
   return `<div class="health-detail-metric"><span>${escapeHTML(label)}</span><strong>${escapeHTML(value)}${unit ? `<small>${escapeHTML(unit)}</small>` : ''}</strong></div>`;
@@ -16,14 +16,14 @@ function titleFor(entry) {
 export const EntryDetail = defineComponent({
   render({ params, store }) {
     const entry = store.state.entries.find(item => item.id === params.id);
-    if (!entry) return `${backHeader('Entry', 'Log')}<div class="ios-scroll"><div class="ios-content"><div class="ios-content-unavailable"><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="circleAlert"></span></div><div class="ios-content-unavailable__title">Entry Not Found</div><div class="ios-content-unavailable__description">It may have already been deleted.</div></div></div></div></div>`;
+    if (!entry) return `${backHeader('Entry', 'Browse')}<div class="ios-scroll"><div class="ios-content"><div class="ios-content-unavailable"><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="circleAlert"></span></div><div class="ios-content-unavailable__title">Entry Not Found</div><div class="ios-content-unavailable__description">It may have already been deleted.</div></div></div></div></div>`;
     const title = titleFor(entry);
     const nutritionMetrics = entry.type === 'food'
       ? NUTRIENTS.filter(nutrient => nutrient.key !== 'calories' && Number(entry[nutrient.key]) > 0).map(nutrient => metric(nutrient.label, String(entry[nutrient.key]), nutrient.unit)).join('')
       : '';
     const meal = entry.type === 'food' && entry.meal ? entry.meal[0].toUpperCase() + entry.meal.slice(1) : 'Food';
     return `
-      ${backHeader(title, 'Log')}
+      ${backHeader(title, 'Browse')}
       <div class="ios-scroll"><div class="ios-content health-form-content">
         <h1 class="ios-large-title">${escapeHTML(title)}</h1>
         <p class="health-detail-date">${escapeHTML(formatDateTime(entry.datetime))}</p>
