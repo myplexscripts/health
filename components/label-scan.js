@@ -1,5 +1,5 @@
 import { defineComponent } from '../framework/framework.js';
-import { backHeader } from './shared.js?v=1.1.2';
+import { backHeader } from './shared.js?v=1.2.0';
 
 let tesseractPromise;
 
@@ -54,11 +54,16 @@ function parseNutrition(text) {
     serving: servingMatch?.[1]?.trim() || '',
     calories: firstNumber(clean, [/calories?\s*[:]?\s*(\d{1,4})/i, /energy\s*[:]?\s*(\d{1,4})\s*kcal/i]),
     fat: firstNumber(clean, [/(?:total\s+)?fat\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i, /lipides?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i]),
+    saturatedFat: firstNumber(clean, [/saturated(?:\s*fat)?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i, /satur[ée]s?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i]),
+    cholesterol: firstNumber(clean, [/cholesterol\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*mg/i]),
     carbs: firstNumber(clean, [/(?:total\s+)?carbohydrates?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i, /glucides?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i]),
     fibre: firstNumber(clean, [/(?:dietary\s+)?fi(?:bre|ber)\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i]),
     sugars: firstNumber(clean, [/(?:total\s+)?sugars?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i, /sucres?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i]),
     protein: firstNumber(clean, [/proteins?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i, /prot[ée]ines?\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*g/i]),
     sodium: firstNumber(clean, [/sodium\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*mg/i]),
+    potassium: firstNumber(clean, [/potassium\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*mg/i]),
+    calcium: firstNumber(clean, [/calcium\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*mg/i]),
+    iron: firstNumber(clean, [/iron\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*mg/i, /fer\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*mg/i]),
     vitaminD: firstNumber(clean, [/vitamin\s*d\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*(?:mcg|µg|ug)/i, /vitamine\s*d\s*[:]?\s*(\d+(?:[.,]\d+)?)\s*(?:mcg|µg|ug)/i])
   };
 }

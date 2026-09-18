@@ -1,19 +1,23 @@
 import { defineComponent } from '../framework/framework.js';
 import {
-  backHeader, field, formDataObject, localDateTimeValue, makeId, numberValue, selectField, textField, toISODate
-} from './shared.js?v=1.1.2';
+  backHeader, field, formDataObject, localDateTimeValue, makeId, numberValue, NUTRIENTS, selectField, textField, toISODate
+} from './shared.js?v=1.2.0';
+
+const primaryKeys = ['calories', 'protein', 'carbs', 'fat', 'fibre', 'sugars', 'sodium'];
+const primaryNutrients = new Set(primaryKeys);
+
+function nutrientField(nutrient, values, required = false) {
+  return field(nutrient.label, nutrient.key, {
+    value: values[nutrient.key] ?? '', unit: nutrient.unit, required,
+    max: nutrient.max, step: String(nutrient.step)
+  });
+}
 
 function nutritionFields(values = {}) {
-  return `<div class="health-form-grid">
-    ${field('Calories', 'calories', { value: values.calories ?? '', unit: 'kcal', required: true, max: 10000 })}
-    ${field('Protein', 'protein', { value: values.protein ?? '', unit: 'g', max: 1000 })}
-    ${field('Carbohydrates', 'carbs', { value: values.carbs ?? '', unit: 'g', max: 1000 })}
-    ${field('Fat', 'fat', { value: values.fat ?? '', unit: 'g', max: 1000 })}
-    ${field('Fibre', 'fibre', { value: values.fibre ?? '', unit: 'g', max: 500 })}
-    ${field('Sugars', 'sugars', { value: values.sugars ?? '', unit: 'g', max: 1000 })}
-    ${field('Sodium', 'sodium', { value: values.sodium ?? '', unit: 'mg', max: 50000 })}
-    ${field('Vitamin D', 'vitaminD', { value: values.vitaminD ?? '', unit: 'mcg', max: 1000 })}
-  </div>`;
+  const primary = primaryKeys.map(key => NUTRIENTS.find(nutrient => nutrient.key === key));
+  const additional = NUTRIENTS.filter(nutrient => !primaryNutrients.has(nutrient.key));
+  return `<div class="health-form-grid">${primary.map(nutrient => nutrientField(nutrient, values, nutrient.key === 'calories')).join('')}</div>
+    <details class="health-nutrient-details"><summary>Additional Nutrients <span>${additional.length}</span></summary><div class="health-form-grid">${additional.map(nutrient => nutrientField(nutrient, values)).join('')}</div></details>`;
 }
 
 export const FoodEntry = defineComponent({
@@ -56,10 +60,9 @@ export const FoodEntry = defineComponent({
       await setState({ saving: true });
       const entry = {
         id: makeId('food'), type: 'food', name: values.name.trim(), serving: values.serving.trim(), meal: values.meal,
-        datetime: toISODate(values.datetime), calories: numberValue(values.calories), protein: numberValue(values.protein),
-        carbs: numberValue(values.carbs), fat: numberValue(values.fat), fibre: numberValue(values.fibre),
-        sugars: numberValue(values.sugars), sodium: numberValue(values.sodium), vitaminD: numberValue(values.vitaminD)
+        datetime: toISODate(values.datetime)
       };
+      NUTRIENTS.forEach(nutrient => { entry[nutrient.key] = numberValue(values[nutrient.key]); });
       app.store.dispatch('addEntry', entry);
       app.toast.show(`${entry.name} added to your log`);
       router.back();

@@ -4,23 +4,25 @@ root?.removeAttribute('data-ios-app');
 const [framework, components, shared] = await Promise.all([
   import('./framework/framework.js'),
   Promise.all([
-    import('./components/food-entry.js?v=1.1.2'),
-    import('./components/label-scan.js?v=1.1.2'),
-    import('./components/health-entry.js?v=1.1.2'),
-    import('./components/entry-detail.js?v=1.1.2'),
-    import('./components/goals.js?v=1.1.2'),
-    import('./components/onboarding.js?v=1.1.2'),
-    import('./components/profile.js?v=1.1.2')
+    import('./components/food-entry.js?v=1.2.0'),
+    import('./components/label-scan.js?v=1.2.0'),
+    import('./components/health-entry.js?v=1.2.0'),
+    import('./components/entry-detail.js?v=1.2.0'),
+    import('./components/goals.js?v=1.2.0'),
+    import('./components/onboarding.js?v=1.2.0'),
+    import('./components/profile.js?v=1.2.0'),
+    import('./components/tracking.js?v=1.2.0')
   ]),
-  import('./components/shared.js?v=1.1.2')
+  import('./components/shared.js?v=1.2.0')
 ]);
 
 const { GlassKitApp, GlassKitStorage } = framework;
-const [{ FoodEntry }, { LabelScan }, { HealthEntry }, { EntryDetail }, { Goals }, { Onboarding }, { Profile }] = components;
+const [{ FoodEntry }, { LabelScan }, { HealthEntry }, { EntryDetail }, { Goals }, { Onboarding }, { Profile }, { Tracking }] = components;
 const { escapeHTML, formatDateTime, NUTRIENTS, normaliseGoalConfig } = shared;
 
 const storage = new GlassKitStorage({ namespace: 'health' });
 const defaultGoals = Object.fromEntries(NUTRIENTS.map(nutrient => [nutrient.key, nutrient.target]));
+const defaultTracking = { bloodPressure: true, heartRate: true, weight: false, glucose: false };
 
 function dayStart(daysAgo = 0) {
   const date = new Date();
@@ -65,6 +67,9 @@ function buildSampleEntries() {
   [[0, 124, 78, 68], [1, 127, 80, 71], [2, 122, 77, 66], [4, 129, 81, 72], [6, 126, 79, 69]].forEach(([daysAgo, systolic, diastolic, pulse]) => {
     entries.push({ id: `sample-bp-${daysAgo}`, type: 'health', readingType: 'blood-pressure', datetime: atTime(daysAgo, 7, 45), systolic, diastolic, pulse, position: 'seated', notes: '' });
   });
+  [[0, 64], [1, 67], [2, 63], [4, 69], [6, 66]].forEach(([daysAgo, heartRate]) => {
+    entries.push({ id: `sample-hr-${daysAgo}`, type: 'health', readingType: 'heart-rate', datetime: atTime(daysAgo, 7, 35), heartRate, context: 'resting', notes: '' });
+  });
   entries.push({ id: 'sample-weight-0', type: 'health', readingType: 'weight', datetime: atTime(0, 7, 40), weight: 84.2, notes: '' });
   return entries.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
 }
@@ -75,10 +80,11 @@ const initialState = saved && Array.isArray(saved.entries) ? {
   goals: { ...defaultGoals, ...(saved.goals || {}) },
   goalConfig: normaliseGoalConfig(saved.goalConfig),
   profile: { name: '', onboarded: false, ...(saved.profile || {}) },
-  preferences: { descriptiveInsights: true, ...(saved.preferences || {}) },
+  preferences: { descriptiveInsights: true, cardioGuideSeen: false, ...(saved.preferences || {}) },
+  tracking: { ...defaultTracking, ...(saved.tracking || {}) },
   usingSampleData: Boolean(saved.usingSampleData)
 } : {
-  entries: buildSampleEntries(), goals: defaultGoals, goalConfig: normaliseGoalConfig(), profile: { name: '', onboarded: false }, preferences: { descriptiveInsights: true }, usingSampleData: true
+  entries: buildSampleEntries(), goals: defaultGoals, goalConfig: normaliseGoalConfig(), profile: { name: '', onboarded: false }, preferences: { descriptiveInsights: true, cardioGuideSeen: false }, tracking: defaultTracking, usingSampleData: true
 };
 
 function persist(state) {
@@ -88,6 +94,7 @@ function persist(state) {
     goalConfig: state.goalConfig,
     profile: state.profile,
     preferences: state.preferences,
+    tracking: state.tracking,
     usingSampleData: state.usingSampleData
   });
 }
@@ -126,6 +133,7 @@ export const app = new GlassKitApp({
     { name: 'entry', path: '/entry/:id', tab: 'log', component: EntryDetail, cache: false },
     { name: 'goals', path: '/goals', tab: 'settings', component: Goals, cache: false },
     { name: 'profile', path: '/profile', tab: 'settings', component: Profile, cache: false },
+    { name: 'tracking', path: '/tracking', tab: 'settings', component: Tracking, cache: false },
     { name: 'onboarding', path: '/onboarding', component: Onboarding, cache: false, cacheComponent: false },
     { path: '*', redirect: initialState.profile.onboarded ? '/today' : '/onboarding' }
   ],
@@ -141,13 +149,15 @@ export const app = new GlassKitApp({
       deleteEntry({ state, set }, id) { set('entries', state.entries.filter(entry => entry.id !== id)); persist(state); },
       setGoals({ state, set }, { goals, goalConfig }) { set('goals', { ...state.goals, ...goals }); set('goalConfig', normaliseGoalConfig(goalConfig)); persist(state); },
       setProfile({ state, set }, profile) { set('profile', { ...state.profile, ...profile }); persist(state); },
-      completeOnboarding({ state, set }, { name, goals, goalConfig }) {
+      completeOnboarding({ state, set }, { name, goals, goalConfig, tracking }) {
         set('profile', { name, onboarded: true });
         set('goals', { ...state.goals, ...goals });
         set('goalConfig', normaliseGoalConfig(goalConfig));
+        set('tracking', { ...state.tracking, ...tracking });
         persist(state);
       },
       setPreferences({ state, set }, preferences) { set('preferences', { ...state.preferences, ...preferences }); persist(state); },
+      setTracking({ state, set }, tracking) { set('tracking', { ...state.tracking, ...tracking }); persist(state); },
       clearData({ state, set }) { set('entries', []); set('usingSampleData', false); persist(state); },
       restoreSample({ state, set }) { set('entries', buildSampleEntries()); set('usingSampleData', true); persist(state); }
     }
@@ -180,6 +190,7 @@ function sampleBanner() {
 }
 
 function nutritionProgress(nutrient, value, goal, setting) {
+  if (setting.mode === 'track') return `<div class="health-nutrient health-nutrient--tracked"><div class="health-nutrient__header"><span>${nutrient.label}<small> tracked</small></span><strong>${round(value)}<small> ${nutrient.unit}</small></strong></div><span class="health-nutrient__note">Logged today</span></div>`;
   const raw = percent(value, goal);
   const over = setting.mode === 'maximum' && value > goal;
   const status = setting.mode === 'maximum'
@@ -192,6 +203,7 @@ function nutritionProgress(nutrient, value, goal, setting) {
 function entryIcon(entry) {
   if (entry.type === 'food') return ['utensils', 'health-icon--food'];
   if (entry.readingType === 'blood-pressure') return ['heartPulse', 'health-icon--heart'];
+  if (entry.readingType === 'heart-rate') return ['activity', 'health-icon--heart-rate'];
   if (entry.readingType === 'weight') return ['scale', 'health-icon--weight'];
   return ['droplets', 'health-icon--glucose'];
 }
@@ -199,6 +211,7 @@ function entryIcon(entry) {
 function entryTitle(entry) {
   if (entry.type === 'food') return entry.name;
   if (entry.readingType === 'blood-pressure') return 'Blood Pressure';
+  if (entry.readingType === 'heart-rate') return 'Heart Rate';
   if (entry.readingType === 'weight') return 'Weight';
   return 'Blood Glucose';
 }
@@ -206,6 +219,7 @@ function entryTitle(entry) {
 function entryValue(entry) {
   if (entry.type === 'food') return `${Math.round(entry.calories)} kcal`;
   if (entry.readingType === 'blood-pressure') return `${entry.systolic}/${entry.diastolic}`;
+  if (entry.readingType === 'heart-rate') return `${round(entry.heartRate)} bpm`;
   if (entry.readingType === 'weight') return `${round(entry.weight, 1)} kg`;
   return `${round(entry.glucose, 1)} mmol/L`;
 }
@@ -226,6 +240,31 @@ function describeToday(totals, goals, config) {
   return active.length ? 'Your nutrition is tracking steadily across your chosen goals and limits.' : 'Your energy log is building a clearer picture of the day.';
 }
 
+function latestHealthEntry(readingType, todaysEntries = []) {
+  return todaysEntries.find(entry => entry.readingType === readingType)
+    || app.store.state.entries.find(entry => entry.readingType === readingType);
+}
+
+function vitalCard(readingType, entry) {
+  const settings = {
+    'blood-pressure': { label: 'Blood Pressure', icon: 'heartPulse', className: 'health-vital-card--pressure', empty: 'Add your first blood pressure reading.' },
+    'heart-rate': { label: 'Heart Rate', icon: 'activity', className: 'health-vital-card--heart-rate', empty: 'Add your first heart rate reading.' },
+    weight: { label: 'Weight', icon: 'scale', className: 'health-vital-card--weight', empty: 'Add your first weight reading.' },
+    glucose: { label: 'Blood Glucose', icon: 'droplets', className: 'health-vital-card--glucose', empty: 'Add your first blood glucose reading.' }
+  }[readingType];
+  const route = `/health/new?type=${readingType}`;
+  if (!entry) return `<article class="ios-card health-vital-card ${settings.className}"><div class="health-vital-card__icon"><span data-ios-symbol="${settings.icon}"></span></div><div><span>${settings.label}</span><strong class="health-vital-card__empty">No readings</strong><p>${settings.empty}</p></div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="${route}">Add</button></article>`;
+  const display = readingType === 'blood-pressure'
+    ? `${entry.systolic}<small>/</small>${entry.diastolic}`
+    : readingType === 'heart-rate'
+      ? `${round(entry.heartRate)}<small>bpm</small>`
+      : readingType === 'weight'
+        ? `${round(entry.weight, 1)}<small>kg</small>`
+        : `${round(entry.glucose, 1)}<small>mmol/L</small>`;
+  const unit = readingType === 'blood-pressure' ? 'mmHg · ' : '';
+  return `<article class="ios-card health-vital-card ${settings.className}"><div class="health-vital-card__icon"><span data-ios-symbol="${settings.icon}"></span></div><div><span>${settings.label}</span><strong>${display}</strong><p>${unit}${formatDay(entry.datetime, { short: true })}</p></div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/entry/${encodeURIComponent(entry.id)}">View</button></article>`;
+}
+
 function renderToday() {
   const target = root.querySelector('[data-today-content]');
   const today = dateKey(new Date());
@@ -239,13 +278,15 @@ function renderToday() {
   const energyPct = percent(totals.calories, goals.calories);
   const remaining = Math.max(0, goals.calories - totals.calories);
   const name = app.store.state.profile?.name || 'there';
-  const latestBP = health.find(entry => entry.readingType === 'blood-pressure') || app.store.state.entries.find(entry => entry.readingType === 'blood-pressure');
+  const trackedReadings = [
+    ['bloodPressure', 'blood-pressure'], ['heartRate', 'heart-rate'], ['weight', 'weight'], ['glucose', 'glucose']
+  ].filter(([key]) => app.store.state.tracking[key]).map(([, type]) => [type, latestHealthEntry(type, health)]);
   target.innerHTML = `
-    <div class="health-page-heading"><div><p class="health-eyebrow">${formatDay(new Date())}</p><h1 class="ios-large-title">Hi, ${escapeHTML(name)}</h1></div><button class="health-avatar" type="button" data-glasskit-link="/settings" aria-label="Open Settings"><span data-ios-symbol="person"></span></button></div>
+    <div class="health-page-heading"><div><p class="health-eyebrow">${formatDay(new Date())}</p><h1 class="ios-large-title">Hi, ${escapeHTML(name)}</h1></div></div>
     <section class="ios-section health-log-launcher" aria-labelledby="quick-log-title"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title" id="quick-log-title">Log something</h2></div></div><div class="health-action-grid">
       <button class="health-action-card" type="button" data-glasskit-link="/scan"><span class="health-action-card__icon" style="background:var(--ios-blue)"><span data-ios-symbol="scanLine"></span></span><span><strong>Scan</strong><small>Nutrition label</small></span></button>
       <button class="health-action-card" type="button" data-glasskit-link="/food/new"><span class="health-action-card__icon" style="background:var(--ios-orange)"><span data-ios-symbol="utensils"></span></span><span><strong>Food</strong><small>Enter manually</small></span></button>
-      <button class="health-action-card" type="button" data-glasskit-link="/health/new"><span class="health-action-card__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span><strong>Health</strong><small>BP and more</small></span></button>
+      <button class="health-action-card" type="button" data-glasskit-link="/health/new"><span class="health-action-card__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span><strong>Health</strong><small>BP, heart rate, more</small></span></button>
     </div></section>
     ${sampleBanner()}
     ${goalConfig.calories?.enabled ? `<section class="ios-section"><article class="ios-card health-energy-card">
@@ -257,9 +298,7 @@ function renderToday() {
         ${activeNutrients.map(nutrient => nutritionProgress(nutrient, totals[nutrient.key], goals[nutrient.key], goalConfig[nutrient.key])).join('')}
       </article>
     </section>` : ''}
-    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Health</h2><div class="ios-section-heading__subtitle">Your most recent readings</div></div></div>
-      <article class="ios-card health-vital-card">${latestBP ? `<div class="health-vital-card__icon"><span data-ios-symbol="heartPulse"></span></div><div><span>Blood Pressure</span><strong>${latestBP.systolic}<small>/</small>${latestBP.diastolic}</strong><p>mmHg • ${formatDay(latestBP.datetime, { short: true })}</p></div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/entry/${encodeURIComponent(latestBP.id)}">View</button>` : `<div><strong>No readings yet</strong><p>Add your first blood pressure reading.</p></div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/health/new">Add</button>`}</article>
-    </section>
+    ${trackedReadings.length ? `<section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Health</h2><div class="ios-section-heading__subtitle">Your most recent readings</div></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/tracking">Edit</button></div><div class="health-vital-grid">${trackedReadings.map(([type, entry]) => vitalCard(type, entry)).join('')}</div></section>` : ''}
     <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Today's Log</h2><div class="ios-section-heading__subtitle">${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</div></div><button class="ios-button ios-button--plain" type="button" data-glasskit-link="/log">View All</button></div>
       ${entries.length ? `<div class="ios-list">${entries.slice(0, 5).map(entryRow).join('')}</div>` : `<div class="ios-content-unavailable health-empty"><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="clipboardList"></span></div><div class="ios-content-unavailable__title">Nothing Logged Yet</div><div class="ios-content-unavailable__description">Add food or a health reading to begin.</div></div></div>`}
     </section>`;
@@ -300,6 +339,15 @@ function bpChart(readings) {
   return `<div class="ios-chart health-line-chart" role="img" aria-label="Blood pressure readings with systolic and diastolic lines"><svg viewBox="0 0 330 156" aria-hidden="true"><line class="ios-chart__grid-line" x1="14" y1="28" x2="316" y2="28"/><line class="ios-chart__grid-line" x1="14" y1="80" x2="316" y2="80"/><line class="ios-chart__baseline" x1="14" y1="132" x2="316" y2="132"/><path class="ios-chart__line" d="${pathFrom(top)}"/>${top.map(point => `<circle class="ios-chart__point" cx="${point.x}" cy="${point.y}" r="3.5"/>`).join('')}<path class="ios-chart__line ios-chart__line--secondary" d="${pathFrom(bottom)}"/>${bottom.map(point => `<circle class="ios-chart__point health-point-secondary" cx="${point.x}" cy="${point.y}" r="3.5"/>`).join('')}</svg></div>`;
 }
 
+function heartRateChart(readings) {
+  if (readings.length < 2) return '';
+  const values = readings.map(entry => Number(entry.heartRate) || 0);
+  const minimum = Math.max(0, Math.floor(Math.min(...values) / 10) * 10 - 10);
+  const maximum = Math.ceil(Math.max(...values) / 10) * 10 + 10;
+  const points = lineCoordinates(values, 302, 104, minimum, maximum);
+  return `<div class="ios-chart health-line-chart" role="img" aria-label="Heart rate readings over time"><svg viewBox="0 0 330 156" aria-hidden="true"><line class="ios-chart__grid-line" x1="14" y1="28" x2="316" y2="28"/><line class="ios-chart__grid-line" x1="14" y1="80" x2="316" y2="80"/><line class="ios-chart__baseline" x1="14" y1="132" x2="316" y2="132"/><path class="ios-chart__line" d="${pathFrom(points)}"/>${points.map(point => `<circle class="ios-chart__point" cx="${point.x}" cy="${point.y}" r="3.5"/>`).join('')}</svg></div>`;
+}
+
 function average(values) { return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0; }
 
 function trendInsights(days, totalsByDay, goals) {
@@ -338,6 +386,8 @@ function renderTrends() {
   const bpReadings = app.store.state.entries.filter(entry => entry.readingType === 'blood-pressure' && validKeys.has(dateKey(entry.datetime))).sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
   const avgSystolic = Math.round(average(bpReadings.map(entry => entry.systolic)));
   const avgDiastolic = Math.round(average(bpReadings.map(entry => entry.diastolic)));
+  const heartRateReadings = app.store.state.entries.filter(entry => entry.readingType === 'heart-rate' && validKeys.has(dateKey(entry.datetime))).sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+  const avgHeartRate = Math.round(average(heartRateReadings.map(entry => entry.heartRate)));
   const insightsSection = app.store.state.preferences.descriptiveInsights ? `<section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">What Stands Out</h2><div class="ios-section-heading__subtitle">Descriptive changes in your own log</div></div></div><div class="health-insight-list">${trendInsights(days, grouped, app.store.state.goals).map(insight => `<article class="ios-insight-card health-insight-card" style="--ios-insight-accent:${insight.colour}"><span class="health-insight-card__icon"><span data-ios-symbol="${insight.icon}"></span></span><div><h3>${insight.title}</h3><p>${insight.text}</p></div></article>`).join('')}</div></section>` : '';
   target.innerHTML = `
     <div class="health-page-heading"><div><p class="health-eyebrow">Patterns, not perfection</p><h1 class="ios-large-title">Trends</h1></div></div>
@@ -349,7 +399,10 @@ function renderTrends() {
     </section>
     ${insightsSection}
     <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Blood Pressure</h2><div class="ios-section-heading__subtitle">Systolic and diastolic readings</div></div></div>
-      ${bpReadings.length >= 2 ? `<article class="ios-chart-card health-chart-card health-bp-chart" style="--ios-chart-accent:var(--ios-red);--ios-chart-accent-2:var(--ios-blue)"><div class="ios-chart-card__header"><div class="ios-chart-card__copy"><h3 class="ios-chart-card__title">Recent Average</h3><div class="ios-chart-card__subtitle">${bpReadings.length} readings in this period</div></div><div class="ios-chart-card__metric">${avgSystolic}<small>/ ${avgDiastolic}</small></div></div>${bpChart(bpReadings)}<div class="ios-chart-legend"><span class="ios-chart-legend__item"><span class="ios-chart-legend__dot"></span>Systolic</span><span class="ios-chart-legend__item"><span class="ios-chart-legend__dot ios-chart-legend__dot--secondary"></span>Diastolic</span></div></article>` : `<div class="ios-content-unavailable health-empty"><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="heartPulse"></span></div><div class="ios-content-unavailable__title">Add More Readings</div><div class="ios-content-unavailable__description">Two blood pressure readings are needed to draw a trend.</div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/health/new">Add Reading</button></div></div>`}
+      ${bpReadings.length >= 2 ? `<article class="ios-chart-card health-chart-card health-bp-chart" style="--ios-chart-accent:var(--ios-red);--ios-chart-accent-2:var(--ios-blue)"><div class="ios-chart-card__header"><div class="ios-chart-card__copy"><h3 class="ios-chart-card__title">Recent Average</h3><div class="ios-chart-card__subtitle">${bpReadings.length} readings in this period</div></div><div class="ios-chart-card__metric">${avgSystolic}<small>/ ${avgDiastolic}</small></div></div>${bpChart(bpReadings)}<div class="ios-chart-legend"><span class="ios-chart-legend__item"><span class="ios-chart-legend__dot"></span>Systolic</span><span class="ios-chart-legend__item"><span class="ios-chart-legend__dot ios-chart-legend__dot--secondary"></span>Diastolic</span></div></article>` : `<div class="ios-content-unavailable health-empty"><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="heartPulse"></span></div><div class="ios-content-unavailable__title">Add More Readings</div><div class="ios-content-unavailable__description">Two blood pressure readings are needed to draw a trend.</div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/health/new?type=blood-pressure">Add Reading</button></div></div>`}
+    </section>
+    <section class="ios-section"><div class="ios-section-heading"><div class="ios-section-heading__copy"><h2 class="ios-section-heading__title">Heart Rate</h2><div class="ios-section-heading__subtitle">Your recorded beats per minute</div></div></div>
+      ${heartRateReadings.length >= 2 ? `<article class="ios-chart-card health-chart-card health-heart-rate-chart" style="--ios-chart-accent:var(--ios-pink)"><div class="ios-chart-card__header"><div class="ios-chart-card__copy"><h3 class="ios-chart-card__title">Recent Average</h3><div class="ios-chart-card__subtitle">${heartRateReadings.length} readings in this period</div></div><div class="ios-chart-card__metric">${avgHeartRate}<small>bpm</small></div></div>${heartRateChart(heartRateReadings)}</article>` : `<div class="ios-content-unavailable health-empty"><div><div class="ios-content-unavailable__icon"><span data-ios-symbol="activity"></span></div><div class="ios-content-unavailable__title">Add More Readings</div><div class="ios-content-unavailable__description">Two heart rate readings are needed to draw a trend.</div><button class="ios-button ios-button--tinted" type="button" data-glasskit-link="/health/new?type=heart-rate">Add Reading</button></div></div>`}
       <div class="ios-section__footer">Trends are informational and are not a diagnosis. Discuss concerns or unusual readings with a qualified health professional.</div>
     </section>`;
   app.enhance(target);
@@ -389,14 +442,19 @@ function filterLogRows() {
 function renderSettings() {
   const target = root.querySelector('[data-settings-content]');
   const activeGoals = NUTRIENTS.filter(nutrient => app.store.state.goalConfig[nutrient.key]?.enabled).length;
+  const activeTracking = Object.values(app.store.state.tracking).filter(Boolean).length;
   const profileName = app.store.state.profile?.name || 'Not set';
   target.innerHTML = `
     <div class="health-page-heading"><div><p class="health-eyebrow">Make Health yours</p><h1 class="ios-large-title">Settings</h1></div></div>
-    <section class="ios-section"><div class="ios-section__header">Profile and Goals</div><div class="ios-list"><button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/profile"><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="person"></span></span><span class="ios-row__body"><span class="ios-row__title">Name</span><span class="ios-row__subtitle">How Health greets you</span></span><span class="ios-row__value">${escapeHTML(profileName)}</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button><button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/goals"><span class="ios-row__icon" style="background:var(--ios-green)"><span data-ios-symbol="target"></span></span><span class="ios-row__body"><span class="ios-row__title">Nutrition Goals</span><span class="ios-row__subtitle">Goals and daily limits</span></span><span class="ios-row__value">${activeGoals} active</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></div></section>
+    <section class="ios-section"><div class="ios-section__header">Profile and Goals</div><div class="ios-list">
+      <button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/profile"><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="person"></span></span><span class="ios-row__body"><span class="ios-row__title">Name</span><span class="ios-row__subtitle">How Health greets you</span></span><span class="ios-row__value">${escapeHTML(profileName)}</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>
+      <button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/goals"><span class="ios-row__icon" style="background:var(--ios-green)"><span data-ios-symbol="target"></span></span><span class="ios-row__body"><span class="ios-row__title">Nutrition Goals</span><span class="ios-row__subtitle">Goals and daily limits</span></span><span class="ios-row__value">${activeGoals} active</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>
+      <button class="ios-row ios-row--disclosure" type="button" data-glasskit-link="/tracking"><span class="ios-row__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span class="ios-row__body"><span class="ios-row__title">Health Tracking</span><span class="ios-row__subtitle">Readings shown on Today</span></span><span class="ios-row__value">${activeTracking} active</span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>
+    </div></section>
     <section class="ios-section"><div class="ios-section__header">Understanding Your Data</div><div class="ios-list"><label class="ios-row"><span class="ios-row__icon" style="background:var(--ios-indigo)"><span data-ios-symbol="sparkles"></span></span><span class="ios-row__body"><span class="ios-row__title">Trend Insights</span><span class="ios-row__subtitle">Describe changes in your own log</span></span><span class="ios-switch"><input type="checkbox" data-insights-toggle ${app.store.state.preferences.descriptiveInsights ? 'checked' : ''} aria-label="Trend insights"><span class="ios-switch__track"></span></span></label></div><div class="ios-section__footer">Insights describe your entries and never diagnose a health condition.</div></section>
     <section class="ios-section"><div class="ios-section__header">Your Data</div><div class="ios-list"><button class="ios-row ios-row--disclosure" type="button" data-export-data><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="download"></span></span><span class="ios-row__body"><span class="ios-row__title">Export Data</span><span class="ios-row__subtitle">Download a JSON backup</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>${app.store.state.usingSampleData ? `<button class="ios-row ios-row--disclosure" type="button" data-clear-sample><span class="ios-row__icon" style="background:var(--ios-orange)"><span data-ios-symbol="refresh"></span></span><span class="ios-row__body"><span class="ios-row__title">Clear Sample Data</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button>` : ''}<button class="ios-row ios-row--disclosure health-destructive-row" type="button" data-erase-data><span class="ios-row__icon"><span data-ios-symbol="trash"></span></span><span class="ios-row__body"><span class="ios-row__title">Erase All Data</span><span class="ios-row__subtitle">This cannot be undone</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></div></section>
     <section class="ios-section"><article class="ios-card health-privacy-card"><span class="health-privacy-card__icon"><span data-ios-symbol="lock"></span></span><div><h2>Your data stays on this device</h2><p>Health stores entries in this browser. Nothing is uploaded unless you choose to export it.</p></div></article></section>
-    <section class="ios-section"><div class="ios-section__header">About</div><div class="ios-list"><div class="ios-row"><span class="ios-row__body"><span class="ios-row__title">Health</span></span><span class="ios-row__value">Version 1.0</span></div></div></section>`;
+    <section class="ios-section"><div class="ios-section__header">About</div><div class="ios-list"><div class="ios-row"><span class="ios-row__body"><span class="ios-row__title">Health</span></span><span class="ios-row__value">Version 1.2</span></div></div></section>`;
   app.enhance(target);
 }
 
@@ -412,7 +470,7 @@ function syncRouteAccessibility() {
 }
 
 function openAddSheet() {
-  const sheet = app.sheet.open({ title: 'Add to Health', cancel: 'Cancel', className: 'health-add-sheet', content: `<div class="ios-list"><button class="ios-row ios-row--disclosure" type="button" data-sheet-route="/scan"><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="scanLine"></span></span><span class="ios-row__body"><span class="ios-row__title">Scan Nutrition Label</span><span class="ios-row__subtitle">Take a photo and review the values</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button><button class="ios-row ios-row--disclosure" type="button" data-sheet-route="/food/new"><span class="ios-row__icon" style="background:var(--ios-orange)"><span data-ios-symbol="utensils"></span></span><span class="ios-row__body"><span class="ios-row__title">Enter Food Manually</span><span class="ios-row__subtitle">Log a meal, snack, or drink</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button><button class="ios-row ios-row--disclosure" type="button" data-sheet-route="/health/new"><span class="ios-row__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span class="ios-row__body"><span class="ios-row__title">Add Health Data</span><span class="ios-row__subtitle">Blood pressure, weight, or glucose</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></div>` });
+  const sheet = app.sheet.open({ title: 'Add to Health', cancel: 'Cancel', className: 'health-add-sheet', content: `<div class="ios-list"><button class="ios-row ios-row--disclosure" type="button" data-sheet-route="/scan"><span class="ios-row__icon" style="background:var(--ios-blue)"><span data-ios-symbol="scanLine"></span></span><span class="ios-row__body"><span class="ios-row__title">Scan Nutrition Label</span><span class="ios-row__subtitle">Take a photo and review the values</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button><button class="ios-row ios-row--disclosure" type="button" data-sheet-route="/food/new"><span class="ios-row__icon" style="background:var(--ios-orange)"><span data-ios-symbol="utensils"></span></span><span class="ios-row__body"><span class="ios-row__title">Enter Food Manually</span><span class="ios-row__subtitle">Log a meal, snack, or drink</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button><button class="ios-row ios-row--disclosure" type="button" data-sheet-route="/health/new"><span class="ios-row__icon" style="background:var(--ios-red)"><span data-ios-symbol="heartPulse"></span></span><span class="ios-row__body"><span class="ios-row__title">Add Health Data</span><span class="ios-row__subtitle">Blood pressure, heart rate, and more</span></span><span class="ios-row__chevron"><span data-ios-symbol="chevronRight"></span></span></button></div>` });
   sheet.body.addEventListener('click', event => {
     const button = event.target.closest('[data-sheet-route]');
     if (!button) return;
@@ -435,7 +493,7 @@ root.addEventListener('click', async event => {
   }
   if (event.target.closest('[data-export-data]')) {
     await app.loading.during(Promise.resolve().then(() => {
-      const data = JSON.stringify({ exportedAt: new Date().toISOString(), profile: app.store.state.profile, entries: app.store.state.entries, goals: app.store.state.goals, goalConfig: app.store.state.goalConfig }, null, 2);
+      const data = JSON.stringify({ exportedAt: new Date().toISOString(), profile: app.store.state.profile, entries: app.store.state.entries, goals: app.store.state.goals, goalConfig: app.store.state.goalConfig, tracking: app.store.state.tracking }, null, 2);
       const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
       const link = document.createElement('a');
       link.href = url; link.download = `health-export-${dateKey(new Date())}.json`; link.click();
@@ -460,6 +518,7 @@ app.store.subscribe('goals', renderAll);
 app.store.subscribe('goalConfig', renderAll);
 app.store.subscribe('profile', renderAll);
 app.store.subscribe('preferences', renderAll);
+app.store.subscribe('tracking', renderAll);
 app.store.subscribe('usingSampleData', renderAll);
 app.store.subscribe('insightRules', renderTrends);
 app.on('routechange', event => {
